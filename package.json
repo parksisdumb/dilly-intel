@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "next start -p 3001",
+    "lint": "eslint",
+    "seed:dev": "npx tsx scripts/seed-dev-user.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",

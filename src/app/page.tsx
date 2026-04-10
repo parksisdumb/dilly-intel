@@ -1,22 +1,58 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
+"use client"
 
-export default async function Home() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
-  if (!user) redirect("/login")
+export default function LoginGate() {
+  const router = useRouter()
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const admin = createAdminClient()
-  const { data: icp } = await admin
-    .from("icp_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .limit(1)
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
-  if (!icp || icp.length === 0) redirect("/setup")
-  redirect("/dashboard")
+    const res = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    })
+
+    if (res.ok) {
+      router.push("/ops")
+    } else {
+      setError("incorrect password")
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex h-full items-center justify-center">
+      <form onSubmit={handleSubmit} className="w-72">
+        <div className="text-muted text-xs uppercase tracking-widest mb-4">
+          dilly intel ops
+        </div>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="password"
+          autoFocus
+          className="w-full bg-surface border border-border rounded px-3 py-2 text-foreground placeholder-muted focus:border-accent focus:outline-none"
+        />
+        {error && (
+          <div className="text-red-500 text-xs mt-2">{error}</div>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="mt-3 w-full bg-accent rounded px-3 py-2 text-white text-sm hover:bg-accent-hover disabled:opacity-50"
+        >
+          {loading ? "..." : "enter"}
+        </button>
+      </form>
+    </div>
+  )
 }

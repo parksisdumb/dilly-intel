@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Dilly Intel",
-  description: "Commercial property intelligence for contractors",
+  title: "Dilly Intel Ops",
+  description: "Agent control & property database operations",
 }
 
 export default function RootLayout({

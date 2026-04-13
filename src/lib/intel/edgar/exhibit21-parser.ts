@@ -5,8 +5,20 @@ function stripHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
+    .replace(/&#\d+;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function extractJsonArray(text: string): string {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (fenced) return fenced[1].trim()
+  const bracketStart = text.indexOf('[')
+  const bracketEnd = text.lastIndexOf(']')
+  if (bracketStart >= 0 && bracketEnd > bracketStart) {
+    return text.slice(bracketStart, bracketEnd + 1)
+  }
+  return text
 }
 
 export async function extractSubsidiaries(
@@ -25,7 +37,7 @@ export async function extractSubsidiaries(
     if (text.trim().length < 50) return []
 
     const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: 'Extract all subsidiary and entity names from this SEC Exhibit 21 (List of Subsidiaries). Return ONLY a JSON array of strings — the legal entity names. No markdown.',
       messages: [
@@ -39,7 +51,7 @@ export async function extractSubsidiaries(
     const content = msg.content[0]
     if (content.type !== 'text') return []
 
-    const parsed = JSON.parse(content.text) as string[]
+    const parsed = JSON.parse(extractJsonArray(content.text)) as string[]
     if (!Array.isArray(parsed)) return []
 
     // Deduplicate and cap at 200

@@ -6,8 +6,22 @@ function stripHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
+    .replace(/&#\d+;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function extractJson(text: string): string {
+  // Strip markdown fences if Claude wraps the response
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (fenced) return fenced[1].trim()
+  // Try to find raw JSON object
+  const braceStart = text.indexOf('{')
+  const braceEnd = text.lastIndexOf('}')
+  if (braceStart >= 0 && braceEnd > braceStart) {
+    return text.slice(braceStart, braceEnd + 1)
+  }
+  return text
 }
 
 const SYSTEM_PROMPT = `You are extracting entity intelligence from a publicly traded REIT's 10-K SEC filing.
@@ -72,7 +86,7 @@ export async function extractEntityIntelligence(
     if (combined.trim().length < 200) return null
 
     const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4000,
       system: SYSTEM_PROMPT,
       messages: [
@@ -86,7 +100,7 @@ export async function extractEntityIntelligence(
     const content = msg.content[0]
     if (content.type !== 'text') return null
 
-    const parsed = JSON.parse(content.text) as EntityExtraction
+    const parsed = JSON.parse(extractJson(content.text)) as EntityExtraction
     return parsed
   } catch {
     return null

@@ -14,14 +14,29 @@ function stripHtml(html: string): string {
 function extractJson(text: string): string {
   // Strip markdown fences if Claude wraps the response
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-  if (fenced) return fenced[1].trim()
-  // Try to find raw JSON object
-  const braceStart = text.indexOf('{')
-  const braceEnd = text.lastIndexOf('}')
+  let json = fenced ? fenced[1].trim() : text
+  // Find raw JSON object boundaries
+  const braceStart = json.indexOf('{')
+  const braceEnd = json.lastIndexOf('}')
   if (braceStart >= 0 && braceEnd > braceStart) {
-    return text.slice(braceStart, braceEnd + 1)
+    json = json.slice(braceStart, braceEnd + 1)
   }
-  return text
+  // Fix trailing commas before ] or } (common Claude output issue)
+  json = json.replace(/,\s*([}\]])/g, '$1')
+  return json
+}
+
+function findFirst(text: string, patterns: RegExp[]): number | null {
+  let earliest: number | null = null
+  for (const p of patterns) {
+    const m = text.match(p)
+    if (m && m.index != null) {
+      if (earliest === null || m.index < earliest) {
+        earliest = m.index
+      }
+    }
+  }
+  return earliest
 }
 
 const SYSTEM_PROMPT = `You are extracting entity-level portfolio intelligence from a publicly traded REIT's 10-K SEC filing. Do NOT extract individual property addresses. Extract market-level and entity-level data only.
@@ -85,30 +100,74 @@ export async function extractEntityIntelligence(
     const html = await res.text()
     const text = stripHtml(html)
 
-    // Extract Item 1 (Business) section
-    const item1Match = text.match(/item\s+1\.?\s*(?:business)/i)
-    const item1Start = item1Match ? (item1Match.index ?? 0) : 0
-    const item1Text = text.slice(item1Start, item1Start + 8000)
+    // --- Item 1: take first 3000 chars for sector/HQ ---
+    const item1Start = findFirst(text, [
+      /item\s+1[\.\s]+business/i,
+      /item\s+1\b/i,
+      /ITEM\s+1/,
+    ]) ?? 0
+    const item1Head = text.slice(item1Start, item1Start + 3000)
 
-    // Extract Item 2 (Properties) section
-    const item2Match = text.match(/item\s+2\.?\s*(?:properties)/i)
-    const item3Match = text.match(/item\s+3/i)
-    let item2Text = ''
-    if (item2Match) {
-      const start = item2Match.index ?? 0
-      const end = item3Match && item3Match.index && item3Match.index > start
-        ? Math.min(item3Match.index, start + 6000)
-        : start + 6000
-      item2Text = text.slice(start, end)
+    // --- Item 2: find full section boundaries ---
+    const item2Start = findFirst(text, [
+      /item\s+2[\.\s]+properties/i,
+      /item\s+2\b/i,
+      /ITEM\s+2/,
+    ])
+
+    // Search for Item 3 only AFTER Item 2
+    let item3Start: number | null = null
+    if (item2Start != null) {
+      const afterItem2 = text.slice(item2Start + 100)
+      const item3Offset = findFirst(afterItem2, [
+        /item\s+3[\.\s]+legal/i,
+        /item\s+3\b/i,
+        /ITEM\s+3/,
+      ])
+      if (item3Offset != null) {
+        item3Start = item2Start + 100 + item3Offset
+      }
     }
 
-    const combined = (item1Text + '\n\n' + item2Text).slice(0, 14000)
+    let item2Head = ''
+    let item2Tail = ''
+
+    if (item2Start != null) {
+      const item2End = item3Start ?? item2Start + 50000
+      const fullItem2 = text.slice(item2Start, item2End)
+
+      // First 4000 chars: narrative overview, HQ, portfolio description
+      item2Head = fullItem2.slice(0, 4000)
+
+      // Last 8000 chars: structured tables (market data, co-investment ventures)
+      if (fullItem2.length > 8000) {
+        item2Tail = fullItem2.slice(fullItem2.length - 8000)
+      } else {
+        item2Tail = fullItem2
+      }
+    }
+
+    // --- Co-investment ventures: search whole document ---
+    let coInvestSection = ''
+    const coInvestMatch = text.match(/co-investment/i)
+    if (coInvestMatch && coInvestMatch.index != null) {
+      const candidate = text.slice(coInvestMatch.index, coInvestMatch.index + 3000)
+      // Only add if not already in item2Tail
+      if (!item2Tail.includes(candidate.slice(0, 200))) {
+        coInvestSection = candidate
+      }
+    }
+
+    // --- Combine: Item1 head + Item2 head + Item2 tail + co-invest ---
+    const combined = (
+      item1Head + '\n\n' + item2Head + '\n\n' + item2Tail + '\n\n' + coInvestSection
+    ).slice(0, 18000)
 
     if (combined.trim().length < 200) return null
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: SYSTEM_PROMPT,
       messages: [
         {

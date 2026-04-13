@@ -24,9 +24,10 @@ function extractJson(text: string): string {
   return text
 }
 
-const SYSTEM_PROMPT = `You are extracting entity intelligence from a publicly traded REIT's 10-K SEC filing.
-Extract the following and return ONLY valid JSON, no markdown, no explanation.
-Return this exact structure:
+const SYSTEM_PROMPT = `You are extracting entity-level portfolio intelligence from a publicly traded REIT's 10-K SEC filing. Do NOT extract individual property addresses. Extract market-level and entity-level data only.
+
+Return ONLY valid JSON matching this exact structure. No markdown, no explanation, no code fences.
+
 {
   "portfolio_type": "type_a" | "type_b" | "unknown",
   "sector": "industrial" | "retail" | "multifamily" | "office" | "healthcare" | "self_storage" | "diversified" | "unknown",
@@ -36,21 +37,41 @@ Return this exact structure:
   "hq_zip": string | null,
   "hq_phone": string | null,
   "ir_website": string | null,
-  "operating_markets": [{"city": string|null, "state": string|null, "region": string|null, "property_count": number|null, "sq_footage": number|null, "property_type": string}],
+  "operating_markets": [
+    {
+      "city": string | null,
+      "state": string | null,
+      "region": string | null,
+      "property_count": number | null,
+      "sq_footage": number | null,
+      "sq_footage_consolidated": number | null,
+      "sq_footage_omm": number | null,
+      "gross_book_value_millions": number | null,
+      "development_acres": number | null,
+      "development_est_sqft": number | null,
+      "property_type": string
+    }
+  ],
+  "investment_vehicles": [
+    {
+      "name": string,
+      "vehicle_type": "consolidated_venture" | "unconsolidated_venture" | "fund" | "other",
+      "sq_footage": number | null,
+      "geography": string | null
+    }
+  ],
   "key_contacts": [{"name": string, "title": string}],
   "total_properties": number | null,
   "total_sq_footage": number | null,
   "portfolio_summary": string | null
 }
 
-portfolio_type rules:
-- type_a = filing lists individual property addresses with street numbers
-- type_b = filing lists markets, regions, or cities without specific addresses
-- unknown = cannot determine
-
-operating_markets: extract every market, city, or geographic area mentioned as an operating location. Max 50 entries.
-key_contacts: CEO, CFO, COO, President, CIO, Head of Real Estate — max 10 entries.
-portfolio_summary: one sentence describing what this REIT owns and where. Max 200 chars.`
+Rules:
+- portfolio_type: type_a = filing lists individual street addresses. type_b = filing lists markets/regions/cities without street addresses.
+- operating_markets: extract every market row from the properties table. For US markets extract city name and state abbreviation. For international entries use country as region. If the table shows both consolidated and O&M square footage, populate both sq_footage_consolidated and sq_footage_omm. Use sq_footage as the best single figure (prefer O&M if available). Extract gross_book_value_millions from the Gross Book Value column. Extract development_acres and development_est_sqft from the land and development pipeline table if present. Max 60 entries.
+- investment_vehicles: extract all named co-investment ventures and funds from the co-investment ventures table or anywhere else in the filing. These are the legal entity names that hold title to properties in public records — critical for PropTracer and county assessor matching. Examples: "Prologis Targeted U.S. Logistics Fund", "Prologis U.S. Logistics Venture". Max 30 entries.
+- key_contacts: CEO, CFO, COO, President, CIO, CRO — max 10 entries.
+- portfolio_summary: one sentence, max 200 chars.`
 
 export async function extractEntityIntelligence(
   documentUrl: string,

@@ -176,6 +176,7 @@ export const edgarIntelligenceAgent = inngest.createFunction(
                   hq_phone: extraction.hq_phone,
                   ir_website: extraction.ir_website,
                   operating_markets: extraction.operating_markets,
+                  investment_vehicles: extraction.investment_vehicles ?? [],
                   key_contacts: extraction.key_contacts,
                   subsidiary_names: mergedSubs,
                   total_properties: extraction.total_properties,

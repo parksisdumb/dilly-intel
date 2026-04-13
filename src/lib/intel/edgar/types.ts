@@ -10,7 +10,19 @@ export type ExtractedMarket = {
   region: string | null
   property_count: number | null
   sq_footage: number | null
+  sq_footage_consolidated: number | null
+  sq_footage_omm: number | null
+  gross_book_value_millions: number | null
+  development_acres: number | null
+  development_est_sqft: number | null
   property_type: string
+}
+
+export type InvestmentVehicle = {
+  name: string
+  vehicle_type: 'consolidated_venture' | 'unconsolidated_venture' | 'fund' | 'other'
+  sq_footage: number | null
+  geography: string | null
 }
 
 export type ExtractedContact = {
@@ -28,6 +40,7 @@ export type EntityExtraction = {
   hq_phone: string | null
   ir_website: string | null
   operating_markets: ExtractedMarket[]
+  investment_vehicles: InvestmentVehicle[]
   key_contacts: ExtractedContact[]
   subsidiary_names: string[]
   total_properties: number | null

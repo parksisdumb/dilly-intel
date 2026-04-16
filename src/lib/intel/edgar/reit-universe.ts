@@ -5,6 +5,15 @@ import type { ReitEntity } from './types'
 const NAREIT_URL = 'https://www.reit.com/data-research/reit-indexes/reits-by-ticker-symbol'
 const CACHE_MIN = 150
 
+// Tickers that don't appear in SEC company_tickers_exchange.json
+// due to ticker changes, empty ticker arrays, or SEC data gaps.
+// Verified manually against data.sec.gov/submissions.
+const TICKER_CIK_OVERRIDES: Record<string, { cik: string; name: string }> = {
+  'PLYM': { cik: '0001515816', name: 'Plymouth Industrial REIT, Inc.' },
+  'MPW':  { cik: '0001287865', name: 'Medical Properties Trust, Inc.' },
+  'ALEX': { cik: '0001545654', name: 'Alexander & Baldwin, Inc.' },
+}
+
 function zeroPadCik(cik: string | number): string {
   return String(cik).padStart(10, '0')
 }
@@ -96,18 +105,24 @@ export async function getReitUniverse(forceRefresh = false): Promise<ReitEntity[
 
   // Step 3: Match NAREIT tickers to SEC CIKs
   const validReits: ReitEntity[] = []
+  const unmatched: { ticker: string; name: string }[] = []
 
   for (const reit of nareitList) {
-    const sec = secLookup.get(reit.ticker.toUpperCase())
-    if (!sec) continue // No SEC filing found — skip
+    const ticker = reit.ticker.toUpperCase()
+    const sec = secLookup.get(ticker)
+
+    if (!sec) {
+      unmatched.push(reit)
+      continue
+    }
 
     const { error } = await db
       .from('intel_entities')
       .upsert(
         {
           cik: sec.cik,
-          name: reit.name, // Use NAREIT name (cleaner than SEC legal name)
-          ticker: reit.ticker.toUpperCase(),
+          name: reit.name,
+          ticker,
           entity_type: 'reit',
           exchange: sec.exchange,
           enabled: true,
@@ -117,11 +132,36 @@ export async function getReitUniverse(forceRefresh = false): Promise<ReitEntity[
       )
 
     if (!error) {
-      validReits.push({
-        cik: sec.cik,
-        ticker: reit.ticker.toUpperCase(),
-        name: reit.name,
-      })
+      validReits.push({ cik: sec.cik, ticker, name: reit.name })
+    }
+  }
+
+  // Step 4: Fallback — resolve unmatched tickers via override map
+  for (const reit of unmatched) {
+    const ticker = reit.ticker.toUpperCase()
+    const override = TICKER_CIK_OVERRIDES[ticker]
+
+    if (!override) {
+      console.warn(`[reit-universe] No CIK found for ${ticker} (${reit.name}) — skipping`)
+      continue
+    }
+
+    const { error } = await db
+      .from('intel_entities')
+      .upsert(
+        {
+          cik: override.cik,
+          name: reit.name,
+          ticker,
+          entity_type: 'reit',
+          enabled: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'cik' }
+      )
+
+    if (!error) {
+      validReits.push({ cik: override.cik, ticker, name: reit.name })
     }
   }
 

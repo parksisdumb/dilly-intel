@@ -2,41 +2,81 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { secFetch } from './sec-client'
 import type { ReitEntity } from './types'
 
-const REIT_SIC_CODES = new Set([
-  '6798', '6552', '6512', '6726', '6500', '6510', '6513', '6531',
-])
+const NAREIT_URL = 'https://www.reit.com/data-research/reit-indexes/reits-by-ticker-symbol'
+const CACHE_MIN = 150
 
 function zeroPadCik(cik: string | number): string {
   return String(cik).padStart(10, '0')
 }
 
-export async function getReitUniverse(): Promise<ReitEntity[]> {
+function parseNareitHtml(html: string): { ticker: string; name: string }[] {
+  const results: { ticker: string; name: string }[] = []
+
+  // Match each table row containing ticker + name cells
+  const rowPattern = /<tr[^>]*>\s*<td[^>]*views-field-field-ticker-symbol[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>\s*<\/td>\s*<td[^>]*views-field-title[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>\s*<\/td>/g
+  let match: RegExpExecArray | null
+
+  while ((match = rowPattern.exec(html)) !== null) {
+    const ticker = match[1].trim()
+    const name = match[2].trim()
+      .replace(/&amp;/g, '&')
+      .replace(/&#039;/g, "'")
+      .replace(/&quot;/g, '"')
+    if (ticker && name) {
+      results.push({ ticker, name })
+    }
+  }
+
+  return results
+}
+
+export async function getReitUniverse(forceRefresh = false): Promise<ReitEntity[]> {
   const db = createAdminClient()
 
   // Check cache: REITs updated in last 30 days
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: cached } = await db
-    .from('intel_entities')
-    .select('cik, ticker, name')
-    .eq('entity_type', 'reit')
-    .eq('enabled', true)
-    .not('cik', 'is', null)
-    .gte('updated_at', thirtyDaysAgo)
+  if (!forceRefresh) {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: cached } = await db
+      .from('intel_entities')
+      .select('cik, ticker, name')
+      .eq('entity_type', 'reit')
+      .eq('enabled', true)
+      .not('cik', 'is', null)
+      .gte('updated_at', thirtyDaysAgo)
 
-  if (cached && cached.length > 0) {
-    return cached.map(r => ({
-      cik: zeroPadCik(r.cik),
-      ticker: r.ticker || '',
-      name: r.name,
-    }))
+    if (cached && cached.length >= CACHE_MIN) {
+      return cached.map(r => ({
+        cik: zeroPadCik(r.cik),
+        ticker: r.ticker || '',
+        name: r.name,
+      }))
+    }
   }
 
-  // Fetch fresh from SEC
+  // Clean up non-REITs from prior SIC-based runs
+  await db
+    .from('intel_entities')
+    .delete()
+    .eq('ticker', 'CBRE')
+    .eq('source_detail', 'edgar_10k')
+
+  // Step 1: Fetch authoritative NAREIT ticker list
+  const nareitRes = await fetch(NAREIT_URL)
+  if (!nareitRes.ok) {
+    throw new Error(`NAREIT fetch failed: ${nareitRes.status}`)
+  }
+  const nareitHtml = await nareitRes.text()
+  const nareitList = parseNareitHtml(nareitHtml)
+
+  if (nareitList.length < 100) {
+    throw new Error(`NAREIT parse returned only ${nareitList.length} entries — expected 150+`)
+  }
+
+  // Step 2: Build ticker → CIK lookup from SEC tickers JSON (one request)
   const tickerRes = await secFetch('https://www.sec.gov/files/company_tickers_exchange.json')
   if (!tickerRes.ok) {
     throw new Error(`SEC tickers fetch failed: ${tickerRes.status}`)
   }
-
   const tickerData: { fields: string[]; data: (string | number)[][] } = await tickerRes.json()
   const fields = tickerData.fields
   const cikIdx = fields.indexOf('cik')
@@ -44,73 +84,44 @@ export async function getReitUniverse(): Promise<ReitEntity[]> {
   const tickerIdx = fields.indexOf('ticker')
   const exchangeIdx = fields.indexOf('exchange')
 
-  // Build candidates from all rows
-  const candidates: { cik: string; ticker: string; name: string; exchange: string }[] = []
+  const secLookup = new Map<string, { cik: string; name: string; exchange: string }>()
   for (const row of tickerData.data) {
-    candidates.push({
+    const ticker = String(row[tickerIdx] || '').toUpperCase()
+    secLookup.set(ticker, {
       cik: zeroPadCik(row[cikIdx]),
-      ticker: String(row[tickerIdx] || ''),
       name: String(row[nameIdx] || ''),
       exchange: String(row[exchangeIdx] || ''),
     })
   }
 
-  // Batch SIC lookups: groups of 20, 500ms between groups
+  // Step 3: Match NAREIT tickers to SEC CIKs
   const validReits: ReitEntity[] = []
-  const GROUP_SIZE = 20
 
-  for (let i = 0; i < candidates.length; i += GROUP_SIZE) {
-    const group = candidates.slice(i, i + GROUP_SIZE)
+  for (const reit of nareitList) {
+    const sec = secLookup.get(reit.ticker.toUpperCase())
+    if (!sec) continue // No SEC filing found — skip
 
-    const results = await Promise.all(
-      group.map(async (c) => {
-        try {
-          const subRes = await secFetch(
-            `https://data.sec.gov/submissions/CIK${c.cik}.json`
-          )
-          if (!subRes.ok) return null
-          const sub: { sic?: string } = await subRes.json()
-          if (sub.sic && REIT_SIC_CODES.has(sub.sic)) {
-            return { ...c, sic: sub.sic }
-          }
-          return null
-        } catch {
-          return null
-        }
+    const { error } = await db
+      .from('intel_entities')
+      .upsert(
+        {
+          cik: sec.cik,
+          name: reit.name, // Use NAREIT name (cleaner than SEC legal name)
+          ticker: reit.ticker.toUpperCase(),
+          entity_type: 'reit',
+          exchange: sec.exchange,
+          enabled: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'cik' }
+      )
+
+    if (!error) {
+      validReits.push({
+        cik: sec.cik,
+        ticker: reit.ticker.toUpperCase(),
+        name: reit.name,
       })
-    )
-
-    const valid = results.filter(
-      (r): r is { cik: string; ticker: string; name: string; exchange: string; sic: string } =>
-        r !== null
-    )
-
-    // Upsert valid REITs
-    for (const reit of valid) {
-      const { error } = await db
-        .from('intel_entities')
-        .upsert(
-          {
-            cik: reit.cik,
-            name: reit.name,
-            ticker: reit.ticker,
-            entity_type: 'reit',
-            sic: reit.sic,
-            exchange: reit.exchange,
-            enabled: true,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'cik' }
-        )
-
-      if (!error) {
-        validReits.push({ cik: reit.cik, ticker: reit.ticker, name: reit.name })
-      }
-    }
-
-    // 500ms delay between groups
-    if (i + GROUP_SIZE < candidates.length) {
-      await new Promise(r => setTimeout(r, 500))
     }
   }
 

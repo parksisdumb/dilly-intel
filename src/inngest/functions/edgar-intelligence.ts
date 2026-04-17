@@ -7,7 +7,7 @@ import { extractEntityIntelligence } from '@/lib/intel/edgar/item2-extractor'
 import { extractSubsidiaries } from '@/lib/intel/edgar/exhibit21-parser'
 import type { ReitEntity } from '@/lib/intel/edgar/types'
 
-const BATCH_SIZE = 10
+const BATCH_SIZE = 25
 const MAX_ENTITIES_PER_RUN = 50
 
 export const edgarIntelligenceAgent = inngest.createFunction(
@@ -15,6 +15,7 @@ export const edgarIntelligenceAgent = inngest.createFunction(
     id: 'edgar-intelligence',
     retries: 1,
     concurrency: { limit: 1 },
+    timeouts: { finish: '15m' },
     triggers: [
       { event: 'app/edgar_intelligence.run' },
       { cron: '0 2 1 * *' },
@@ -50,7 +51,7 @@ export const edgarIntelligenceAgent = inngest.createFunction(
     })
 
     // Step 3: Process batch
-    let batchResult: { processed: number; log: string[] }
+    let batchResult: { processed: number; log: string[]; tradedCount: number; nonTradedCount: number; stubCount: number }
 
     try {
       batchResult = await step.run('process-batch', async () => {
@@ -75,7 +76,7 @@ export const edgarIntelligenceAgent = inngest.createFunction(
 
         if (universe.length === 0) {
           log.push('Empty universe — nothing to process')
-          return { processed: 0, log }
+          return { processed: 0, log, tradedCount: 0, nonTradedCount: 0, stubCount: 0 }
         }
 
         // Find start index
@@ -91,12 +92,15 @@ export const edgarIntelligenceAgent = inngest.createFunction(
             .from('agent_registry')
             .update({ config: { ...config, last_processed_idx: null } })
             .eq('agent_name', 'edgar_intelligence')
-          return { processed: 0, log }
+          return { processed: 0, log, tradedCount: 0, nonTradedCount: 0, stubCount: 0 }
         }
 
         log.push(`Processing batch: index ${startIdx}..${startIdx + batch.length - 1} of ${universe.length}`)
 
         let processed = 0
+        let tradedCount = 0
+        let nonTradedCount = 0
+        let stubCount = 0
         const updateCursor = async (idx: number) => {
           await db
             .from('agent_registry')
@@ -111,21 +115,30 @@ export const edgarIntelligenceAgent = inngest.createFunction(
             break
           }
 
-          log.push(`--- ${reit.name} (CIK: ${reit.cik ?? 'none'}, ticker: ${reit.ticker ?? 'none'}) ---`)
+          const prefix = !reit.is_traded ? '[NON-TRADED] ' : ''
+          log.push(`--- ${prefix}${reit.name} (CIK: ${reit.cik ?? 'none'}, ticker: ${reit.ticker ?? 'none'}) ---`)
 
           try {
-            // Skip 10-K extraction for non-traded REITs without CIK
+            // Case 1: No CIK — stub entry, no 10-K available
             if (!reit.cik) {
-              log.push(`  No CIK — non-traded REIT, marking for website scrape`)
+              log.push(`  STUB: ${reit.name} — no CIK, stored as website scrape target`)
               await db
                 .from('intel_entities')
-                .update({ needs_website_scrape: true })
-                .eq('name', reit.name)
-                .eq('entity_type', 'reit')
+                .upsert({
+                  name: reit.name,
+                  entity_type: 'reit',
+                  source_detail: 'reitsacrossamerica',
+                  portfolio_type: 'unknown',
+                  needs_website_scrape: true,
+                  enabled: true,
+                  updated_at: new Date().toISOString(),
+                }, { onConflict: 'name' })
+              stubCount++
+              await updateCursor(i)
               continue
             }
 
-            // Get filing URLs
+            // Case 2 & 3: Have CIK — fetch 10-K and extract
             const { documentUrl, exhibit21Url, filingDate } = await getFilingUrls(reit.cik, reit.name)
 
             if (!documentUrl) {
@@ -141,10 +154,7 @@ export const edgarIntelligenceAgent = inngest.createFunction(
 
             if (!extraction) {
               log.push(`  Extraction failed, skipping`)
-              await db
-                .from('agent_registry')
-                .update({ config: { ...config, last_processed_cik: reit.cik } })
-                .eq('agent_name', 'edgar_intelligence')
+              await updateCursor(i)
               continue
             }
 
@@ -201,6 +211,8 @@ export const edgarIntelligenceAgent = inngest.createFunction(
             } else {
               log.push(`  Upserted successfully`)
               processed++
+              if (reit.is_traded) tradedCount++
+              else nonTradedCount++
             }
 
             await updateCursor(i)
@@ -211,8 +223,8 @@ export const edgarIntelligenceAgent = inngest.createFunction(
           }
         }
 
-        log.push(`Batch complete: ${processed} entities processed`)
-        return { processed, log }
+        log.push(`Batch complete: ${processed} entities processed (traded: ${tradedCount}, non-traded: ${nonTradedCount}, stubs: ${stubCount})`)
+        return { processed, log, tradedCount, nonTradedCount, stubCount }
       })
     } catch (err: unknown) {
       // Finalize with error
@@ -244,16 +256,16 @@ export const edgarIntelligenceAgent = inngest.createFunction(
     // Step 4: Finalize success
     await step.run('finalize', async () => {
       const db = createAdminClient()
-      const { processed, log } = batchResult
+      const { processed, log, tradedCount, nonTradedCount, stubCount } = batchResult
 
       await db
         .from('agent_runs')
         .update({
           status: 'completed',
           completed_at: new Date().toISOString(),
-          records_found: processed,
+          records_found: processed + stubCount,
           records_added: processed,
-          metadata: { log },
+          metadata: { log, tradedCount, nonTradedCount, stubCount },
         })
         .eq('id', runId)
 

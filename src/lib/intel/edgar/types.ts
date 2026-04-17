@@ -1,7 +1,8 @@
 export type ReitEntity = {
-  cik: string      // zero-padded to 10 chars e.g. "0001045609"
-  ticker: string
+  cik: string | null      // null for non-traded REITs with no SEC filing
+  ticker: string | null   // null for non-traded/private REITs
   name: string
+  is_traded: boolean      // true if has ticker and exchange listing
 }
 
 export type ExtractedMarket = {

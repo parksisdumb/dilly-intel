@@ -68,7 +68,7 @@ export const edgarIntelligenceAgent = inngest.createFunction(
           .single()
 
         const config = (registryRow?.config ?? {}) as Record<string, unknown>
-        const lastProcessedCik = (config.last_processed_cik as string | null) ?? null
+        const lastIdx = (config.last_processed_idx as number | null) ?? null
 
         // Get universe
         const universe: ReitEntity[] = await getReitUniverse()
@@ -79,15 +79,9 @@ export const edgarIntelligenceAgent = inngest.createFunction(
         }
 
         // Find start index
-        let startIdx = 0
-        if (lastProcessedCik) {
-          const found = universe.findIndex(r => r.cik === lastProcessedCik)
-          if (found >= 0 && found + 1 < universe.length) {
-            startIdx = found + 1
-          } else {
-            startIdx = 0
-          }
-        }
+        const startIdx = lastIdx != null && lastIdx + 1 < universe.length
+          ? lastIdx + 1
+          : 0
 
         const batch = universe.slice(startIdx, startIdx + BATCH_SIZE)
 
@@ -95,7 +89,7 @@ export const edgarIntelligenceAgent = inngest.createFunction(
           log.push('Universe exhausted — resetting cursor')
           await db
             .from('agent_registry')
-            .update({ config: { ...config, last_processed_cik: null } })
+            .update({ config: { ...config, last_processed_idx: null } })
             .eq('agent_name', 'edgar_intelligence')
           return { processed: 0, log }
         }
@@ -103,26 +97,40 @@ export const edgarIntelligenceAgent = inngest.createFunction(
         log.push(`Processing batch: index ${startIdx}..${startIdx + batch.length - 1} of ${universe.length}`)
 
         let processed = 0
+        const updateCursor = async (idx: number) => {
+          await db
+            .from('agent_registry')
+            .update({ config: { ...config, last_processed_idx: startIdx + idx } })
+            .eq('agent_name', 'edgar_intelligence')
+        }
 
-        for (const reit of batch) {
+        for (let i = 0; i < batch.length; i++) {
+          const reit = batch[i]
           if (processed >= MAX_ENTITIES_PER_RUN) {
             log.push(`Hit max entities per run (${MAX_ENTITIES_PER_RUN})`)
             break
           }
 
-          log.push(`--- ${reit.name} (CIK: ${reit.cik}, ticker: ${reit.ticker}) ---`)
+          log.push(`--- ${reit.name} (CIK: ${reit.cik ?? 'none'}, ticker: ${reit.ticker ?? 'none'}) ---`)
 
           try {
+            // Skip 10-K extraction for non-traded REITs without CIK
+            if (!reit.cik) {
+              log.push(`  No CIK — non-traded REIT, marking for website scrape`)
+              await db
+                .from('intel_entities')
+                .update({ needs_website_scrape: true })
+                .eq('name', reit.name)
+                .eq('entity_type', 'reit')
+              continue
+            }
+
             // Get filing URLs
             const { documentUrl, exhibit21Url, filingDate } = await getFilingUrls(reit.cik, reit.name)
 
             if (!documentUrl) {
               log.push(`  No 10-K found, skipping`)
-              // Still update cursor
-              await db
-                .from('agent_registry')
-                .update({ config: { ...config, last_processed_cik: reit.cik } })
-                .eq('agent_name', 'edgar_intelligence')
+              await updateCursor(i)
               continue
             }
 
@@ -195,19 +203,11 @@ export const edgarIntelligenceAgent = inngest.createFunction(
               processed++
             }
 
-            // Update cursor
-            await db
-              .from('agent_registry')
-              .update({ config: { ...config, last_processed_cik: reit.cik } })
-              .eq('agent_name', 'edgar_intelligence')
+            await updateCursor(i)
           } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err)
             log.push(`  Error: ${msg}`)
-            // Update cursor even on error so we don't retry the same one
-            await db
-              .from('agent_registry')
-              .update({ config: { ...config, last_processed_cik: reit.cik } })
-              .eq('agent_name', 'edgar_intelligence')
+            await updateCursor(i)
           }
         }
 

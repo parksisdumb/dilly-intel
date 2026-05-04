@@ -40,3 +40,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+__pycache__/
+*.pyc
+
+# scraper state & raw output
+/data/
+progress.json
+progress_*.json
+geocoder_progress.json
+
+# claude local settings
+.claude/settings.local.json

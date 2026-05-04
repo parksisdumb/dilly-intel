@@ -1,0 +1,5681 @@
+[
+ {
+  "zip": "37010",
+  "city": "Adams",
+  "minLat": 36.476999,
+  "maxLat": 36.644337,
+  "minLon": -87.219067,
+  "maxLon": -86.987462,
+  "is_po_box": false
+ },
+ {
+  "zip": "37012",
+  "city": "Alexandria",
+  "minLat": 35.990662,
+  "maxLat": 36.128702,
+  "minLon": -86.074495,
+  "maxLon": -85.908051,
+  "is_po_box": false
+ },
+ {
+  "zip": "37013",
+  "city": "Antioch",
+  "minLat": 35.980292,
+  "maxLat": 36.13206,
+  "minLon": -86.713049,
+  "maxLon": -86.54609,
+  "is_po_box": false
+ },
+ {
+  "zip": "37014",
+  "city": "Arrington",
+  "minLat": 35.831795,
+  "maxLat": 35.901311,
+  "minLon": -86.734428,
+  "maxLon": -86.558847,
+  "is_po_box": false
+ },
+ {
+  "zip": "37015",
+  "city": "Ashland City",
+  "minLat": 36.145894,
+  "maxLat": 36.429725,
+  "minLon": -87.246333,
+  "maxLon": -86.893426,
+  "is_po_box": false
+ },
+ {
+  "zip": "37016",
+  "city": "Auburntown",
+  "minLat": 35.8961,
+  "maxLat": 36.008199,
+  "minLon": -86.162806,
+  "maxLon": -86.014849,
+  "is_po_box": false
+ },
+ {
+  "zip": "37018",
+  "city": "Beechgrove",
+  "minLat": 35.574756,
+  "maxLat": 35.706429,
+  "minLon": -86.279328,
+  "maxLon": -86.097797,
+  "is_po_box": false
+ },
+ {
+  "zip": "37019",
+  "city": "Belfast",
+  "minLat": 35.341078,
+  "maxLat": 35.449984,
+  "minLon": -86.746332,
+  "maxLon": -86.645952,
+  "is_po_box": false
+ },
+ {
+  "zip": "37020",
+  "city": "Bell Buckle",
+  "minLat": 35.549914,
+  "maxLat": 35.706448,
+  "minLon": -86.545753,
+  "maxLon": -86.259449,
+  "is_po_box": false
+ },
+ {
+  "zip": "37022",
+  "city": "Bethpage",
+  "minLat": 36.387138,
+  "maxLat": 36.607697,
+  "minLon": -86.410636,
+  "maxLon": -86.205535,
+  "is_po_box": false
+ },
+ {
+  "zip": "37023",
+  "city": "Big Rock",
+  "minLat": 36.551075,
+  "maxLat": 36.628272,
+  "minLon": -87.835355,
+  "maxLon": -87.716826,
+  "is_po_box": false
+ },
+ {
+  "zip": "37025",
+  "city": "Bon Aqua",
+  "minLat": 35.867146,
+  "maxLat": 36.005077,
+  "minLon": -87.47092,
+  "maxLon": -87.183373,
+  "is_po_box": false
+ },
+ {
+  "zip": "37026",
+  "city": "Bradyville",
+  "minLat": 35.643989,
+  "maxLat": 35.746068,
+  "minLon": -86.208769,
+  "maxLon": -86.012966,
+  "is_po_box": false
+ },
+ {
+  "zip": "37027",
+  "city": "Brentwood",
+  "minLat": 35.93256,
+  "maxLat": 36.065644,
+  "minLon": -86.888793,
+  "maxLon": -86.681483,
+  "is_po_box": false
+ },
+ {
+  "zip": "37028",
+  "city": "Bumpus Mills",
+  "minLat": 36.582276,
+  "maxLat": 36.667773,
+  "minLon": -87.912003,
+  "maxLon": -87.794585,
+  "is_po_box": false
+ },
+ {
+  "zip": "37029",
+  "city": "Burns",
+  "minLat": 35.976515,
+  "maxLat": 36.107359,
+  "minLon": -87.348172,
+  "maxLon": -87.178624,
+  "is_po_box": false
+ },
+ {
+  "zip": "37030",
+  "city": "Carthage",
+  "minLat": 36.186246,
+  "maxLat": 36.369162,
+  "minLon": -86.078844,
+  "maxLon": -85.828569,
+  "is_po_box": false
+ },
+ {
+  "zip": "37031",
+  "city": "Castalian Springs",
+  "minLat": 36.299375,
+  "maxLat": 36.447355,
+  "minLon": -86.362023,
+  "maxLon": -86.20942,
+  "is_po_box": false
+ },
+ {
+  "zip": "37032",
+  "city": "Cedar Hill",
+  "minLat": 36.427653,
+  "maxLat": 36.644355,
+  "minLon": -87.128677,
+  "maxLon": -86.911867,
+  "is_po_box": false
+ },
+ {
+  "zip": "37033",
+  "city": "Centerville",
+  "minLat": 35.615124,
+  "maxLat": 35.878316,
+  "minLon": -87.74375,
+  "maxLon": -87.323613,
+  "is_po_box": false
+ },
+ {
+  "zip": "37034",
+  "city": "Chapel Hill",
+  "minLat": 35.574733,
+  "maxLat": 35.708678,
+  "minLon": -86.797972,
+  "maxLon": -86.586844,
+  "is_po_box": false
+ },
+ {
+  "zip": "37035",
+  "city": "Chapmansboro",
+  "minLat": 36.297711,
+  "maxLat": 36.455711,
+  "minLon": -87.178179,
+  "maxLon": -87.063143,
+  "is_po_box": false
+ },
+ {
+  "zip": "37036",
+  "city": "Charlotte",
+  "minLat": 36.127305,
+  "maxLat": 36.373852,
+  "minLon": -87.396036,
+  "maxLon": -87.13448,
+  "is_po_box": false
+ },
+ {
+  "zip": "37037",
+  "city": "Christiana",
+  "minLat": 35.631913,
+  "maxLat": 35.76055,
+  "minLon": -86.524051,
+  "maxLon": -86.19348,
+  "is_po_box": false
+ },
+ {
+  "zip": "37040",
+  "city": "Clarksville",
+  "minLat": 36.391097,
+  "maxLat": 36.642044,
+  "minLon": -87.466095,
+  "maxLon": -87.172343,
+  "is_po_box": false
+ },
+ {
+  "zip": "37042",
+  "city": "Clarksville",
+  "minLat": 36.449621,
+  "maxLat": 36.641637,
+  "minLon": -87.512408,
+  "maxLon": -87.316897,
+  "is_po_box": false
+ },
+ {
+  "zip": "37043",
+  "city": "Clarksville",
+  "minLat": 36.324265,
+  "maxLat": 36.642096,
+  "minLon": -87.334511,
+  "maxLon": -87.119598,
+  "is_po_box": false
+ },
+ {
+  "zip": "37046",
+  "city": "College Grove",
+  "minLat": 35.689652,
+  "maxLat": 35.874206,
+  "minLon": -86.838864,
+  "maxLon": -86.595144,
+  "is_po_box": false
+ },
+ {
+  "zip": "37047",
+  "city": "Cornersville",
+  "minLat": 35.242595,
+  "maxLat": 35.410605,
+  "minLon": -86.916051,
+  "maxLon": -86.736293,
+  "is_po_box": false
+ },
+ {
+  "zip": "37048",
+  "city": "Cottontown",
+  "minLat": 36.412089,
+  "maxLat": 36.581514,
+  "minLon": -86.657848,
+  "maxLon": -86.533413,
+  "is_po_box": false
+ },
+ {
+  "zip": "37049",
+  "city": "Cross Plains",
+  "minLat": 36.499733,
+  "maxLat": 36.602456,
+  "minLon": -86.764514,
+  "maxLon": -86.617354,
+  "is_po_box": false
+ },
+ {
+  "zip": "37050",
+  "city": "Cumberland City",
+  "minLat": 36.279507,
+  "maxLat": 36.439938,
+  "minLon": -87.745899,
+  "maxLon": -87.518907,
+  "is_po_box": false
+ },
+ {
+  "zip": "37051",
+  "city": "Cumberland Furnace",
+  "minLat": 36.229165,
+  "maxLat": 36.394578,
+  "minLon": -87.564016,
+  "maxLon": -87.267325,
+  "is_po_box": false
+ },
+ {
+  "zip": "37052",
+  "city": "Cunningham",
+  "minLat": 36.316826,
+  "maxLat": 36.440809,
+  "minLon": -87.494864,
+  "maxLon": -87.308792,
+  "is_po_box": false
+ },
+ {
+  "zip": "37055",
+  "city": "Dickson",
+  "minLat": 35.922938,
+  "maxLat": 36.215309,
+  "minLon": -87.566798,
+  "maxLon": -87.29362,
+  "is_po_box": false
+ },
+ {
+  "zip": "37057",
+  "city": "Dixon Springs",
+  "minLat": 36.328534,
+  "maxLat": 36.469886,
+  "minLon": -86.095461,
+  "maxLon": -85.967445,
+  "is_po_box": false
+ },
+ {
+  "zip": "37058",
+  "city": "Dover",
+  "minLat": 36.353307,
+  "maxLat": 36.630338,
+  "minLon": -88.061456,
+  "maxLon": -87.694029,
+  "is_po_box": false
+ },
+ {
+  "zip": "37059",
+  "city": "Dowelltown",
+  "minLat": 35.936971,
+  "maxLat": 36.037191,
+  "minLon": -85.967367,
+  "maxLon": -85.860461,
+  "is_po_box": false
+ },
+ {
+  "zip": "37060",
+  "city": "Eagleville",
+  "minLat": 35.657344,
+  "maxLat": 35.817511,
+  "minLon": -86.698581,
+  "maxLon": -86.573371,
+  "is_po_box": false
+ },
+ {
+  "zip": "37061",
+  "city": "Erin",
+  "minLat": 36.177719,
+  "maxLat": 36.36824,
+  "minLon": -87.815568,
+  "maxLon": -87.541735,
+  "is_po_box": false
+ },
+ {
+  "zip": "37062",
+  "city": "Fairview",
+  "minLat": 35.908085,
+  "maxLat": 36.049726,
+  "minLon": -87.218764,
+  "maxLon": -87.046006,
+  "is_po_box": false
+ },
+ {
+  "zip": "37064",
+  "city": "Franklin",
+  "minLat": 35.74659,
+  "maxLat": 36.011946,
+  "minLon": -87.180668,
+  "maxLon": -86.736776,
+  "is_po_box": false
+ },
+ {
+  "zip": "37066",
+  "city": "Gallatin",
+  "minLat": 36.277983,
+  "maxLat": 36.490879,
+  "minLon": -86.585074,
+  "maxLon": -86.332139,
+  "is_po_box": false
+ },
+ {
+  "zip": "37067",
+  "city": "Franklin",
+  "minLat": 35.849755,
+  "maxLat": 35.967218,
+  "minLon": -86.851708,
+  "maxLon": -86.710304,
+  "is_po_box": false
+ },
+ {
+  "zip": "37069",
+  "city": "Franklin",
+  "minLat": 35.932217,
+  "maxLat": 36.048927,
+  "minLon": -86.970074,
+  "maxLon": -86.830104,
+  "is_po_box": false
+ },
+ {
+  "zip": "37072",
+  "city": "Goodlettsville",
+  "minLat": 36.272291,
+  "maxLat": 36.433993,
+  "minLon": -86.89059,
+  "maxLon": -86.633781,
+  "is_po_box": false
+ },
+ {
+  "zip": "37073",
+  "city": "Greenbrier",
+  "minLat": 36.381721,
+  "maxLat": 36.488589,
+  "minLon": -86.93127,
+  "maxLon": -86.689492,
+  "is_po_box": false
+ },
+ {
+  "zip": "37074",
+  "city": "Hartsville",
+  "minLat": 36.319225,
+  "maxLat": 36.516062,
+  "minLon": -86.253114,
+  "maxLon": -86.034501,
+  "is_po_box": false
+ },
+ {
+  "zip": "37075",
+  "city": "Hendersonville",
+  "minLat": 36.244204,
+  "maxLat": 36.445361,
+  "minLon": -86.679286,
+  "maxLon": -86.524237,
+  "is_po_box": false
+ },
+ {
+  "zip": "37076",
+  "city": "Hermitage",
+  "minLat": 36.056921,
+  "maxLat": 36.229357,
+  "minLon": -86.667208,
+  "maxLon": -86.5125,
+  "is_po_box": false
+ },
+ {
+  "zip": "37078",
+  "city": "Hurricane Mills",
+  "minLat": 35.836779,
+  "maxLat": 36.01149,
+  "minLon": -87.876958,
+  "maxLon": -87.635995,
+  "is_po_box": false
+ },
+ {
+  "zip": "37079",
+  "city": "Indian Mound",
+  "minLat": 36.394367,
+  "maxLat": 36.561402,
+  "minLon": -87.768285,
+  "maxLon": -87.529594,
+  "is_po_box": false
+ },
+ {
+  "zip": "37080",
+  "city": "Joelton",
+  "minLat": 36.254628,
+  "maxLat": 36.390486,
+  "minLon": -87.010912,
+  "maxLon": -86.835003,
+  "is_po_box": false
+ },
+ {
+  "zip": "37082",
+  "city": "Kingston Springs",
+  "minLat": 36.041312,
+  "maxLat": 36.16744,
+  "minLon": -87.182573,
+  "maxLon": -87.040532,
+  "is_po_box": false
+ },
+ {
+  "zip": "37083",
+  "city": "Lafayette",
+  "minLat": 36.424557,
+  "maxLat": 36.635482,
+  "minLon": -86.171394,
+  "maxLon": -85.84166,
+  "is_po_box": false
+ },
+ {
+  "zip": "37085",
+  "city": "Lascassas",
+  "minLat": 35.873974,
+  "maxLat": 36.021941,
+  "minLon": -86.378867,
+  "maxLon": -86.204315,
+  "is_po_box": false
+ },
+ {
+  "zip": "37086",
+  "city": "La Vergne",
+  "minLat": 35.95644,
+  "maxLat": 36.087817,
+  "minLon": -86.620442,
+  "maxLon": -86.495286,
+  "is_po_box": false
+ },
+ {
+  "zip": "37087",
+  "city": "Lebanon",
+  "minLat": 36.182345,
+  "maxLat": 36.375487,
+  "minLon": -86.483229,
+  "maxLon": -86.052308,
+  "is_po_box": false
+ },
+ {
+  "zip": "37090",
+  "city": "Lebanon",
+  "minLat": 36.001048,
+  "maxLat": 36.262867,
+  "minLon": -86.454144,
+  "maxLon": -86.06831,
+  "is_po_box": false
+ },
+ {
+  "zip": "37091",
+  "city": "Lewisburg",
+  "minLat": 35.320612,
+  "maxLat": 35.667873,
+  "minLon": -86.914864,
+  "maxLon": -86.589111,
+  "is_po_box": false
+ },
+ {
+  "zip": "37095",
+  "city": "Liberty",
+  "minLat": 35.86524,
+  "maxLat": 36.105416,
+  "minLon": -86.045682,
+  "maxLon": -85.855856,
+  "is_po_box": false
+ },
+ {
+  "zip": "37096",
+  "city": "Linden",
+  "minLat": 35.448351,
+  "maxLat": 35.776885,
+  "minLon": -88.035872,
+  "maxLon": -87.648488,
+  "is_po_box": false
+ },
+ {
+  "zip": "37097",
+  "city": "Lobelville",
+  "minLat": 35.663436,
+  "maxLat": 35.840921,
+  "minLon": -87.981763,
+  "maxLon": -87.709976,
+  "is_po_box": false
+ },
+ {
+  "zip": "37098",
+  "city": "Lyles",
+  "minLat": 35.781492,
+  "maxLat": 35.945815,
+  "minLon": -87.419856,
+  "maxLon": -87.22905,
+  "is_po_box": false
+ },
+ {
+  "zip": "37101",
+  "city": "Mc Ewen",
+  "minLat": 35.884321,
+  "maxLat": 36.245508,
+  "minLon": -87.780714,
+  "maxLon": -87.527912,
+  "is_po_box": false
+ },
+ {
+  "zip": "37110",
+  "city": "Mc Minnville",
+  "minLat": 35.436061,
+  "maxLat": 35.847574,
+  "minLon": -85.967001,
+  "maxLon": -85.491532,
+  "is_po_box": false
+ },
+ {
+  "zip": "37115",
+  "city": "Madison",
+  "minLat": 36.192761,
+  "maxLat": 36.3182,
+  "minLon": -86.757934,
+  "maxLon": -86.63892,
+  "is_po_box": false
+ },
+ {
+  "zip": "37118",
+  "city": "Milton",
+  "minLat": 35.856016,
+  "maxLat": 36.010429,
+  "minLon": -86.245129,
+  "maxLon": -86.139313,
+  "is_po_box": false
+ },
+ {
+  "zip": "37122",
+  "city": "Mount Juliet",
+  "minLat": 36.027038,
+  "maxLat": 36.321294,
+  "minLon": -86.57931,
+  "maxLon": -86.401635,
+  "is_po_box": false
+ },
+ {
+  "zip": "37127",
+  "city": "Murfreesboro",
+  "minLat": 35.710288,
+  "maxLat": 35.841014,
+  "minLon": -86.418757,
+  "maxLon": -86.246274,
+  "is_po_box": false
+ },
+ {
+  "zip": "37128",
+  "city": "Murfreesboro",
+  "minLat": 35.718343,
+  "maxLat": 35.87495,
+  "minLon": -86.602829,
+  "maxLon": -86.397123,
+  "is_po_box": false
+ },
+ {
+  "zip": "37129",
+  "city": "Murfreesboro",
+  "minLat": 35.812021,
+  "maxLat": 36.049897,
+  "minLon": -86.568167,
+  "maxLon": -86.364201,
+  "is_po_box": false
+ },
+ {
+  "zip": "37130",
+  "city": "Murfreesboro",
+  "minLat": 35.805735,
+  "maxLat": 35.974205,
+  "minLon": -86.400734,
+  "maxLon": -86.234628,
+  "is_po_box": false
+ },
+ {
+  "zip": "37132",
+  "city": "Murfreesboro",
+  "minLat": 35.843317,
+  "maxLat": 35.855025,
+  "minLon": -86.372124,
+  "maxLon": -86.353274,
+  "is_po_box": false
+ },
+ {
+  "zip": "37134",
+  "city": "New Johnsonville",
+  "minLat": 35.937213,
+  "maxLat": 36.07232,
+  "minLon": -88.022635,
+  "maxLon": -87.853849,
+  "is_po_box": false
+ },
+ {
+  "zip": "37135",
+  "city": "Nolensville",
+  "minLat": 35.870423,
+  "maxLat": 35.995124,
+  "minLon": -86.748772,
+  "maxLon": -86.596531,
+  "is_po_box": false
+ },
+ {
+  "zip": "37137",
+  "city": "Nunnelly",
+  "minLat": 35.794025,
+  "maxLat": 35.960891,
+  "minLon": -87.637835,
+  "maxLon": -87.359492,
+  "is_po_box": false
+ },
+ {
+  "zip": "37138",
+  "city": "Old Hickory",
+  "minLat": 36.198441,
+  "maxLat": 36.301064,
+  "minLon": -86.687155,
+  "maxLon": -86.545616,
+  "is_po_box": false
+ },
+ {
+  "zip": "37140",
+  "city": "Only",
+  "minLat": 35.811015,
+  "maxLat": 35.896609,
+  "minLon": -87.717337,
+  "maxLon": -87.567055,
+  "is_po_box": false
+ },
+ {
+  "zip": "37141",
+  "city": "Orlinda",
+  "minLat": 36.576483,
+  "maxLat": 36.650164,
+  "minLon": -86.757669,
+  "maxLon": -86.637983,
+  "is_po_box": false
+ },
+ {
+  "zip": "37142",
+  "city": "Palmyra",
+  "minLat": 36.354148,
+  "maxLat": 36.458363,
+  "minLon": -87.602597,
+  "maxLon": -87.426589,
+  "is_po_box": false
+ },
+ {
+  "zip": "37143",
+  "city": "Pegram",
+  "minLat": 36.049557,
+  "maxLat": 36.188602,
+  "minLon": -87.090388,
+  "maxLon": -86.975842,
+  "is_po_box": false
+ },
+ {
+  "zip": "37144",
+  "city": "Petersburg",
+  "minLat": 35.192039,
+  "maxLat": 35.428762,
+  "minLon": -86.848206,
+  "maxLon": -86.491154,
+  "is_po_box": false
+ },
+ {
+  "zip": "37145",
+  "city": "Pleasant Shade",
+  "minLat": 36.298578,
+  "maxLat": 36.454742,
+  "minLon": -86.024062,
+  "maxLon": -85.784623,
+  "is_po_box": false
+ },
+ {
+  "zip": "37146",
+  "city": "Pleasant View",
+  "minLat": 36.359651,
+  "maxLat": 36.447724,
+  "minLon": -87.116877,
+  "maxLon": -86.969372,
+  "is_po_box": false
+ },
+ {
+  "zip": "37148",
+  "city": "Portland",
+  "minLat": 36.455168,
+  "maxLat": 36.652443,
+  "minLon": -86.683236,
+  "maxLon": -86.374154,
+  "is_po_box": false
+ },
+ {
+  "zip": "37149",
+  "city": "Readyville",
+  "minLat": 35.725077,
+  "maxLat": 35.878945,
+  "minLon": -86.272106,
+  "maxLon": -86.096397,
+  "is_po_box": false
+ },
+ {
+  "zip": "37150",
+  "city": "Red Boiling Springs",
+  "minLat": 36.411836,
+  "maxLat": 36.623305,
+  "minLon": -85.942489,
+  "maxLon": -85.687756,
+  "is_po_box": false
+ },
+ {
+  "zip": "37151",
+  "city": "Riddleton",
+  "minLat": 36.263205,
+  "maxLat": 36.377018,
+  "minLon": -86.097257,
+  "maxLon": -85.97261,
+  "is_po_box": false
+ },
+ {
+  "zip": "37153",
+  "city": "Rockvale",
+  "minLat": 35.672996,
+  "maxLat": 35.844428,
+  "minLon": -86.631281,
+  "maxLon": -86.47634,
+  "is_po_box": false
+ },
+ {
+  "zip": "37160",
+  "city": "Shelbyville",
+  "minLat": 35.31346,
+  "maxLat": 35.652858,
+  "minLon": -86.652159,
+  "maxLon": -86.313164,
+  "is_po_box": false
+ },
+ {
+  "zip": "37165",
+  "city": "Slayden",
+  "minLat": 36.284396,
+  "maxLat": 36.296648,
+  "minLon": -87.477277,
+  "maxLon": -87.46311,
+  "is_po_box": false
+ },
+ {
+  "zip": "37166",
+  "city": "Smithville",
+  "minLat": 35.796301,
+  "maxLat": 36.068758,
+  "minLon": -85.925644,
+  "maxLon": -85.631858,
+  "is_po_box": false
+ },
+ {
+  "zip": "37167",
+  "city": "Smyrna",
+  "minLat": 35.880975,
+  "maxLat": 36.040276,
+  "minLon": -86.628,
+  "maxLon": -86.427956,
+  "is_po_box": false
+ },
+ {
+  "zip": "37171",
+  "city": "Southside",
+  "minLat": 36.312442,
+  "maxLat": 36.427885,
+  "minLon": -87.347153,
+  "maxLon": -87.253922,
+  "is_po_box": false
+ },
+ {
+  "zip": "37172",
+  "city": "Springfield",
+  "minLat": 36.366439,
+  "maxLat": 36.649001,
+  "minLon": -87.000538,
+  "maxLon": -86.710426,
+  "is_po_box": false
+ },
+ {
+  "zip": "37174",
+  "city": "Spring Hill",
+  "minLat": 35.643238,
+  "maxLat": 35.797977,
+  "minLon": -87.003112,
+  "maxLon": -86.776249,
+  "is_po_box": false
+ },
+ {
+  "zip": "37175",
+  "city": "Stewart",
+  "minLat": 36.232375,
+  "maxLat": 36.438283,
+  "minLon": -88.008319,
+  "maxLon": -87.799551,
+  "is_po_box": false
+ },
+ {
+  "zip": "37178",
+  "city": "Tennessee Ridge",
+  "minLat": 36.232359,
+  "maxLat": 36.411228,
+  "minLon": -87.845865,
+  "maxLon": -87.716781,
+  "is_po_box": false
+ },
+ {
+  "zip": "37179",
+  "city": "Thompsons Station",
+  "minLat": 35.758286,
+  "maxLat": 35.882625,
+  "minLon": -87.037193,
+  "maxLon": -86.747475,
+  "is_po_box": false
+ },
+ {
+  "zip": "37180",
+  "city": "Unionville",
+  "minLat": 35.532765,
+  "maxLat": 35.688286,
+  "minLon": -86.646062,
+  "maxLon": -86.52787,
+  "is_po_box": false
+ },
+ {
+  "zip": "37181",
+  "city": "Vanleer",
+  "minLat": 36.188787,
+  "maxLat": 36.31672,
+  "minLon": -87.568843,
+  "maxLon": -87.376344,
+  "is_po_box": false
+ },
+ {
+  "zip": "37183",
+  "city": "Wartrace",
+  "minLat": 35.369353,
+  "maxLat": 35.607735,
+  "minLon": -86.41429,
+  "maxLon": -86.192263,
+  "is_po_box": false
+ },
+ {
+  "zip": "37184",
+  "city": "Watertown",
+  "minLat": 35.978811,
+  "maxLat": 36.192886,
+  "minLon": -86.244692,
+  "maxLon": -86.039057,
+  "is_po_box": false
+ },
+ {
+  "zip": "37185",
+  "city": "Waverly",
+  "minLat": 35.803799,
+  "maxLat": 36.254956,
+  "minLon": -87.963119,
+  "maxLon": -87.684803,
+  "is_po_box": false
+ },
+ {
+  "zip": "37186",
+  "city": "Westmoreland",
+  "minLat": 36.502283,
+  "maxLat": 36.650924,
+  "minLon": -86.411379,
+  "maxLon": -86.091175,
+  "is_po_box": false
+ },
+ {
+  "zip": "37187",
+  "city": "White Bluff",
+  "minLat": 36.059112,
+  "maxLat": 36.23331,
+  "minLon": -87.299669,
+  "maxLon": -87.073785,
+  "is_po_box": false
+ },
+ {
+  "zip": "37188",
+  "city": "White House",
+  "minLat": 36.414768,
+  "maxLat": 36.548554,
+  "minLon": -86.734928,
+  "maxLon": -86.608315,
+  "is_po_box": false
+ },
+ {
+  "zip": "37189",
+  "city": "Whites Creek",
+  "minLat": 36.233972,
+  "maxLat": 36.338354,
+  "minLon": -86.891442,
+  "maxLon": -86.76951,
+  "is_po_box": false
+ },
+ {
+  "zip": "37190",
+  "city": "Woodbury",
+  "minLat": 35.711356,
+  "maxLat": 35.964928,
+  "minLon": -86.155934,
+  "maxLon": -85.88921,
+  "is_po_box": false
+ },
+ {
+  "zip": "37191",
+  "city": "Woodlawn",
+  "minLat": 36.439824,
+  "maxLat": 36.552778,
+  "minLon": -87.623076,
+  "maxLon": -87.442965,
+  "is_po_box": false
+ },
+ {
+  "zip": "37201",
+  "city": "Nashville",
+  "minLat": 36.155792,
+  "maxLat": 36.175963,
+  "minLon": -86.78531,
+  "maxLon": -86.769523,
+  "is_po_box": false
+ },
+ {
+  "zip": "37203",
+  "city": "Nashville",
+  "minLat": 36.132033,
+  "maxLat": 36.169637,
+  "minLon": -86.822819,
+  "maxLon": -86.759564,
+  "is_po_box": false
+ },
+ {
+  "zip": "37204",
+  "city": "Nashville",
+  "minLat": 36.080968,
+  "maxLat": 36.134898,
+  "minLon": -86.802939,
+  "maxLon": -86.746299,
+  "is_po_box": false
+ },
+ {
+  "zip": "37205",
+  "city": "Nashville",
+  "minLat": 36.069819,
+  "maxLat": 36.147928,
+  "minLon": -86.919977,
+  "maxLon": -86.816625,
+  "is_po_box": false
+ },
+ {
+  "zip": "37206",
+  "city": "Nashville",
+  "minLat": 36.162098,
+  "maxLat": 36.200522,
+  "minLon": -86.770807,
+  "maxLon": -86.689908,
+  "is_po_box": false
+ },
+ {
+  "zip": "37207",
+  "city": "Nashville",
+  "minLat": 36.174503,
+  "maxLat": 36.293875,
+  "minLon": -86.829441,
+  "maxLon": -86.740821,
+  "is_po_box": false
+ },
+ {
+  "zip": "37208",
+  "city": "Nashville",
+  "minLat": 36.158434,
+  "maxLat": 36.214246,
+  "minLon": -86.837765,
+  "maxLon": -86.780591,
+  "is_po_box": false
+ },
+ {
+  "zip": "37209",
+  "city": "Nashville",
+  "minLat": 36.080921,
+  "maxLat": 36.209566,
+  "minLon": -86.995828,
+  "maxLon": -86.808173,
+  "is_po_box": false
+ },
+ {
+  "zip": "37210",
+  "city": "Nashville",
+  "minLat": 36.109707,
+  "maxLat": 36.167567,
+  "minLon": -86.774604,
+  "maxLon": -86.690847,
+  "is_po_box": false
+ },
+ {
+  "zip": "37211",
+  "city": "Nashville",
+  "minLat": 36.00217,
+  "maxLat": 36.13367,
+  "minLon": -86.765834,
+  "maxLon": -86.671364,
+  "is_po_box": false
+ },
+ {
+  "zip": "37212",
+  "city": "Nashville",
+  "minLat": 36.116116,
+  "maxLat": 36.15049,
+  "minLon": -86.819728,
+  "maxLon": -86.786384,
+  "is_po_box": false
+ },
+ {
+  "zip": "37213",
+  "city": "Nashville",
+  "minLat": 36.158872,
+  "maxLat": 36.176962,
+  "minLon": -86.780591,
+  "maxLon": -86.744085,
+  "is_po_box": false
+ },
+ {
+  "zip": "37214",
+  "city": "Nashville",
+  "minLat": 36.103628,
+  "maxLat": 36.246315,
+  "minLon": -86.712976,
+  "maxLon": -86.609517,
+  "is_po_box": false
+ },
+ {
+  "zip": "37215",
+  "city": "Nashville",
+  "minLat": 36.040766,
+  "maxLat": 36.12976,
+  "minLon": -86.886642,
+  "maxLon": -86.79171,
+  "is_po_box": false
+ },
+ {
+  "zip": "37216",
+  "city": "Nashville",
+  "minLat": 36.194895,
+  "maxLat": 36.240678,
+  "minLon": -86.755713,
+  "maxLon": -86.695162,
+  "is_po_box": false
+ },
+ {
+  "zip": "37217",
+  "city": "Nashville",
+  "minLat": 36.071683,
+  "maxLat": 36.144349,
+  "minLon": -86.72817,
+  "maxLon": -86.586196,
+  "is_po_box": false
+ },
+ {
+  "zip": "37218",
+  "city": "Nashville",
+  "minLat": 36.135589,
+  "maxLat": 36.266963,
+  "minLon": -86.988205,
+  "maxLon": -86.808715,
+  "is_po_box": false
+ },
+ {
+  "zip": "37219",
+  "city": "Nashville",
+  "minLat": 36.1608,
+  "maxLat": 36.174862,
+  "minLon": -86.790096,
+  "maxLon": -86.775968,
+  "is_po_box": false
+ },
+ {
+  "zip": "37220",
+  "city": "Nashville",
+  "minLat": 36.039165,
+  "maxLat": 36.089689,
+  "minLon": -86.812735,
+  "maxLon": -86.744972,
+  "is_po_box": false
+ },
+ {
+  "zip": "37221",
+  "city": "Nashville",
+  "minLat": 35.986344,
+  "maxLat": 36.117936,
+  "minLon": -87.054766,
+  "maxLon": -86.866855,
+  "is_po_box": false
+ },
+ {
+  "zip": "37228",
+  "city": "Nashville",
+  "minLat": 36.185178,
+  "maxLat": 36.202526,
+  "minLon": -86.827591,
+  "maxLon": -86.782977,
+  "is_po_box": false
+ },
+ {
+  "zip": "37240",
+  "city": "Nashville",
+  "minLat": 36.143922,
+  "maxLat": 36.146054,
+  "minLon": -86.807208,
+  "maxLon": -86.803746,
+  "is_po_box": false
+ },
+ {
+  "zip": "37243",
+  "city": "Nashville",
+  "minLat": 36.163725,
+  "maxLat": 36.166357,
+  "minLon": -86.783798,
+  "maxLon": -86.780334,
+  "is_po_box": false
+ },
+ {
+  "zip": "37246",
+  "city": "Nashville",
+  "minLat": 36.158132,
+  "maxLat": 36.161606,
+  "minLon": -86.793219,
+  "maxLon": -86.789513,
+  "is_po_box": false
+ },
+ {
+  "zip": "37301",
+  "city": "Altamont",
+  "minLat": 35.351068,
+  "maxLat": 35.494406,
+  "minLon": -85.889216,
+  "maxLon": -85.685535,
+  "is_po_box": false
+ },
+ {
+  "zip": "37302",
+  "city": "Apison",
+  "minLat": 34.986648,
+  "maxLat": 35.054515,
+  "minLon": -85.070846,
+  "maxLon": -84.969055,
+  "is_po_box": false
+ },
+ {
+  "zip": "37303",
+  "city": "Athens",
+  "minLat": 35.293911,
+  "maxLat": 35.58299,
+  "minLon": -84.858345,
+  "maxLon": -84.460374,
+  "is_po_box": false
+ },
+ {
+  "zip": "37305",
+  "city": "Beersheba Springs",
+  "minLat": 35.426962,
+  "maxLat": 35.529282,
+  "minLon": -85.777877,
+  "maxLon": -85.634727,
+  "is_po_box": false
+ },
+ {
+  "zip": "37306",
+  "city": "Belvidere",
+  "minLat": 34.989514,
+  "maxLat": 35.197196,
+  "minLon": -86.372979,
+  "maxLon": -86.030475,
+  "is_po_box": false
+ },
+ {
+  "zip": "37307",
+  "city": "Benton",
+  "minLat": 35.094189,
+  "maxLat": 35.243266,
+  "minLon": -84.713731,
+  "maxLon": -84.5309,
+  "is_po_box": false
+ },
+ {
+  "zip": "37308",
+  "city": "Birchwood",
+  "minLat": 35.245551,
+  "maxLat": 35.437248,
+  "minLon": -85.051514,
+  "maxLon": -84.92615,
+  "is_po_box": false
+ },
+ {
+  "zip": "37309",
+  "city": "Calhoun",
+  "minLat": 35.212826,
+  "maxLat": 35.385266,
+  "minLon": -84.860164,
+  "maxLon": -84.624961,
+  "is_po_box": false
+ },
+ {
+  "zip": "37310",
+  "city": "Charleston",
+  "minLat": 35.185603,
+  "maxLat": 35.346489,
+  "minLon": -84.897635,
+  "maxLon": -84.657396,
+  "is_po_box": false
+ },
+ {
+  "zip": "37311",
+  "city": "Cleveland",
+  "minLat": 34.987646,
+  "maxLat": 35.22679,
+  "minLon": -84.994351,
+  "maxLon": -84.844218,
+  "is_po_box": false
+ },
+ {
+  "zip": "37312",
+  "city": "Cleveland",
+  "minLat": 35.166547,
+  "maxLat": 35.299279,
+  "minLon": -84.978849,
+  "maxLon": -84.766685,
+  "is_po_box": false
+ },
+ {
+  "zip": "37313",
+  "city": "Coalmont",
+  "minLat": 35.306781,
+  "maxLat": 35.431476,
+  "minLon": -85.770083,
+  "maxLon": -85.658114,
+  "is_po_box": false
+ },
+ {
+  "zip": "37315",
+  "city": "Collegedale",
+  "minLat": 35.041313,
+  "maxLat": 35.053272,
+  "minLon": -85.054336,
+  "maxLon": -85.048296,
+  "is_po_box": false
+ },
+ {
+  "zip": "37317",
+  "city": "Copperhill",
+  "minLat": 34.98798,
+  "maxLat": 35.108196,
+  "minLon": -84.58412,
+  "maxLon": -84.311373,
+  "is_po_box": false
+ },
+ {
+  "zip": "37318",
+  "city": "Cowan",
+  "minLat": 35.130884,
+  "maxLat": 35.216351,
+  "minLon": -86.051178,
+  "maxLon": -85.931354,
+  "is_po_box": false
+ },
+ {
+  "zip": "37321",
+  "city": "Dayton",
+  "minLat": 35.409288,
+  "maxLat": 35.587647,
+  "minLon": -85.160265,
+  "maxLon": -84.857173,
+  "is_po_box": false
+ },
+ {
+  "zip": "37322",
+  "city": "Decatur",
+  "minLat": 35.350074,
+  "maxLat": 35.640684,
+  "minLon": -84.985452,
+  "maxLon": -84.666374,
+  "is_po_box": false
+ },
+ {
+  "zip": "37323",
+  "city": "Cleveland",
+  "minLat": 34.987569,
+  "maxLat": 35.243599,
+  "minLon": -84.942382,
+  "maxLon": -84.699737,
+  "is_po_box": false
+ },
+ {
+  "zip": "37324",
+  "city": "Decherd",
+  "minLat": 35.186509,
+  "maxLat": 35.322083,
+  "minLon": -86.106459,
+  "maxLon": -85.865501,
+  "is_po_box": false
+ },
+ {
+  "zip": "37325",
+  "city": "Delano",
+  "minLat": 35.204016,
+  "maxLat": 35.285473,
+  "minLon": -84.686002,
+  "maxLon": -84.480479,
+  "is_po_box": false
+ },
+ {
+  "zip": "37326",
+  "city": "Ducktown",
+  "minLat": 35.026358,
+  "maxLat": 35.053936,
+  "minLon": -84.402649,
+  "maxLon": -84.368762,
+  "is_po_box": false
+ },
+ {
+  "zip": "37327",
+  "city": "Dunlap",
+  "minLat": 35.260848,
+  "maxLat": 35.567422,
+  "minLon": -85.607326,
+  "maxLon": -85.220854,
+  "is_po_box": false
+ },
+ {
+  "zip": "37328",
+  "city": "Elora",
+  "minLat": 34.990838,
+  "maxLat": 35.072695,
+  "minLon": -86.439779,
+  "maxLon": -86.294967,
+  "is_po_box": false
+ },
+ {
+  "zip": "37329",
+  "city": "Englewood",
+  "minLat": 35.318518,
+  "maxLat": 35.472714,
+  "minLon": -84.56723,
+  "maxLon": -84.37416,
+  "is_po_box": false
+ },
+ {
+  "zip": "37330",
+  "city": "Estill Springs",
+  "minLat": 35.210488,
+  "maxLat": 35.363574,
+  "minLon": -86.234161,
+  "maxLon": -85.992633,
+  "is_po_box": false
+ },
+ {
+  "zip": "37331",
+  "city": "Etowah",
+  "minLat": 35.266472,
+  "maxLat": 35.397473,
+  "minLon": -84.610629,
+  "maxLon": -84.452339,
+  "is_po_box": false
+ },
+ {
+  "zip": "37332",
+  "city": "Evensville",
+  "minLat": 35.536405,
+  "maxLat": 35.656036,
+  "minLon": -85.088853,
+  "maxLon": -84.828207,
+  "is_po_box": false
+ },
+ {
+  "zip": "37333",
+  "city": "Farner",
+  "minLat": 35.121478,
+  "maxLat": 35.183318,
+  "minLon": -84.383183,
+  "maxLon": -84.297566,
+  "is_po_box": false
+ },
+ {
+  "zip": "37334",
+  "city": "Fayetteville",
+  "minLat": 34.990677,
+  "maxLat": 35.363021,
+  "minLon": -86.788927,
+  "maxLon": -86.415393,
+  "is_po_box": false
+ },
+ {
+  "zip": "37335",
+  "city": "Flintville",
+  "minLat": 34.99048,
+  "maxLat": 35.146627,
+  "minLon": -86.522708,
+  "maxLon": -86.301472,
+  "is_po_box": false
+ },
+ {
+  "zip": "37336",
+  "city": "Georgetown",
+  "minLat": 35.213507,
+  "maxLat": 35.392435,
+  "minLon": -85.024585,
+  "maxLon": -84.84608,
+  "is_po_box": false
+ },
+ {
+  "zip": "37337",
+  "city": "Grandview",
+  "minLat": 35.711021,
+  "maxLat": 35.85905,
+  "minLon": -84.985815,
+  "maxLon": -84.77333,
+  "is_po_box": false
+ },
+ {
+  "zip": "37338",
+  "city": "Graysville",
+  "minLat": 35.305192,
+  "maxLat": 35.524365,
+  "minLon": -85.33241,
+  "maxLon": -85.057122,
+  "is_po_box": false
+ },
+ {
+  "zip": "37339",
+  "city": "Gruetli Laager",
+  "minLat": 35.301997,
+  "maxLat": 35.45412,
+  "minLon": -85.682073,
+  "maxLon": -85.573785,
+  "is_po_box": false
+ },
+ {
+  "zip": "37340",
+  "city": "Guild",
+  "minLat": 34.985399,
+  "maxLat": 35.074845,
+  "minLon": -85.567597,
+  "maxLon": -85.483505,
+  "is_po_box": false
+ },
+ {
+  "zip": "37341",
+  "city": "Harrison",
+  "minLat": 35.106791,
+  "maxLat": 35.349318,
+  "minLon": -85.151277,
+  "maxLon": -85.024349,
+  "is_po_box": false
+ },
+ {
+  "zip": "37342",
+  "city": "Hillsboro",
+  "minLat": 35.289189,
+  "maxLat": 35.493746,
+  "minLon": -86.030467,
+  "maxLon": -85.869478,
+  "is_po_box": false
+ },
+ {
+  "zip": "37343",
+  "city": "Hixson",
+  "minLat": 35.106473,
+  "maxLat": 35.233333,
+  "minLon": -85.286834,
+  "maxLon": -85.12716,
+  "is_po_box": false
+ },
+ {
+  "zip": "37345",
+  "city": "Huntland",
+  "minLat": 34.989926,
+  "maxLat": 35.115185,
+  "minLon": -86.320277,
+  "maxLon": -86.142289,
+  "is_po_box": false
+ },
+ {
+  "zip": "37347",
+  "city": "Jasper",
+  "minLat": 35.000272,
+  "maxLat": 35.132052,
+  "minLon": -85.714147,
+  "maxLon": -85.50805,
+  "is_po_box": false
+ },
+ {
+  "zip": "37348",
+  "city": "Kelso",
+  "minLat": 35.053163,
+  "maxLat": 35.201924,
+  "minLon": -86.513045,
+  "maxLon": -86.369485,
+  "is_po_box": false
+ },
+ {
+  "zip": "37350",
+  "city": "Lookout Mountain",
+  "minLat": 34.983373,
+  "maxLat": 35.01272,
+  "minLon": -85.364758,
+  "maxLon": -85.338553,
+  "is_po_box": false
+ },
+ {
+  "zip": "37351",
+  "city": "Lupton City",
+  "minLat": 35.093863,
+  "maxLat": 35.10677,
+  "minLon": -85.269467,
+  "maxLon": -85.252595,
+  "is_po_box": false
+ },
+ {
+  "zip": "37352",
+  "city": "Lynchburg",
+  "minLat": 35.218676,
+  "maxLat": 35.34678,
+  "minLon": -86.437996,
+  "maxLon": -86.27719,
+  "is_po_box": false
+ },
+ {
+  "zip": "37353",
+  "city": "Mc Donald",
+  "minLat": 35.031004,
+  "maxLat": 35.22887,
+  "minLon": -85.039123,
+  "maxLon": -84.929037,
+  "is_po_box": false
+ },
+ {
+  "zip": "37354",
+  "city": "Madisonville",
+  "minLat": 35.389112,
+  "maxLat": 35.62035,
+  "minLon": -84.497004,
+  "maxLon": -84.203421,
+  "is_po_box": false
+ },
+ {
+  "zip": "37355",
+  "city": "Manchester",
+  "minLat": 35.343738,
+  "maxLat": 35.660929,
+  "minLon": -86.245289,
+  "maxLon": -85.899473,
+  "is_po_box": false
+ },
+ {
+  "zip": "37356",
+  "city": "Monteagle",
+  "minLat": 35.181575,
+  "maxLat": 35.285057,
+  "minLon": -85.887876,
+  "maxLon": -85.767985,
+  "is_po_box": false
+ },
+ {
+  "zip": "37357",
+  "city": "Morrison",
+  "minLat": 35.43145,
+  "maxLat": 35.726934,
+  "minLon": -86.089414,
+  "maxLon": -85.791307,
+  "is_po_box": false
+ },
+ {
+  "zip": "37359",
+  "city": "Mulberry",
+  "minLat": 35.136264,
+  "maxLat": 35.26727,
+  "minLon": -86.491788,
+  "maxLon": -86.324025,
+  "is_po_box": false
+ },
+ {
+  "zip": "37360",
+  "city": "Normandy",
+  "minLat": 35.368659,
+  "maxLat": 35.507667,
+  "minLon": -86.330672,
+  "maxLon": -86.192644,
+  "is_po_box": false
+ },
+ {
+  "zip": "37361",
+  "city": "Ocoee",
+  "minLat": 35.046853,
+  "maxLat": 35.150436,
+  "minLon": -84.738385,
+  "maxLon": -84.624934,
+  "is_po_box": false
+ },
+ {
+  "zip": "37362",
+  "city": "Oldfort",
+  "minLat": 34.987594,
+  "maxLat": 35.124476,
+  "minLon": -84.809072,
+  "maxLon": -84.564451,
+  "is_po_box": false
+ },
+ {
+  "zip": "37363",
+  "city": "Ooltewah",
+  "minLat": 34.986531,
+  "maxLat": 35.251126,
+  "minLon": -85.162873,
+  "maxLon": -84.98074,
+  "is_po_box": false
+ },
+ {
+  "zip": "37365",
+  "city": "Palmer",
+  "minLat": 35.3037,
+  "maxLat": 35.458979,
+  "minLon": -85.633338,
+  "maxLon": -85.485622,
+  "is_po_box": false
+ },
+ {
+  "zip": "37366",
+  "city": "Pelham",
+  "minLat": 35.236956,
+  "maxLat": 35.385773,
+  "minLon": -85.904877,
+  "maxLon": -85.751737,
+  "is_po_box": false
+ },
+ {
+  "zip": "37367",
+  "city": "Pikeville",
+  "minLat": 35.454622,
+  "maxLat": 35.830761,
+  "minLon": -85.436214,
+  "maxLon": -84.948942,
+  "is_po_box": false
+ },
+ {
+  "zip": "37369",
+  "city": "Reliance",
+  "minLat": 35.080817,
+  "maxLat": 35.323484,
+  "minLon": -84.616689,
+  "maxLon": -84.344822,
+  "is_po_box": false
+ },
+ {
+  "zip": "37370",
+  "city": "Riceville",
+  "minLat": 35.27063,
+  "maxLat": 35.435626,
+  "minLon": -84.816587,
+  "maxLon": -84.602314,
+  "is_po_box": false
+ },
+ {
+  "zip": "37373",
+  "city": "Sale Creek",
+  "minLat": 35.337672,
+  "maxLat": 35.459232,
+  "minLon": -85.18892,
+  "maxLon": -85.016343,
+  "is_po_box": false
+ },
+ {
+  "zip": "37374",
+  "city": "Sequatchie",
+  "minLat": 35.085205,
+  "maxLat": 35.305613,
+  "minLon": -85.743114,
+  "maxLon": -85.573396,
+  "is_po_box": false
+ },
+ {
+  "zip": "37375",
+  "city": "Sewanee",
+  "minLat": 35.052528,
+  "maxLat": 35.264828,
+  "minLon": -85.985134,
+  "maxLon": -85.754195,
+  "is_po_box": false
+ },
+ {
+  "zip": "37376",
+  "city": "Sherwood",
+  "minLat": 34.988253,
+  "maxLat": 35.125988,
+  "minLon": -86.067137,
+  "maxLon": -85.863387,
+  "is_po_box": false
+ },
+ {
+  "zip": "37377",
+  "city": "Signal Mountain",
+  "minLat": 35.084165,
+  "maxLat": 35.30106,
+  "minLon": -85.418071,
+  "maxLon": -85.233134,
+  "is_po_box": false
+ },
+ {
+  "zip": "37379",
+  "city": "Soddy Daisy",
+  "minLat": 35.19069,
+  "maxLat": 35.408768,
+  "minLon": -85.305686,
+  "maxLon": -85.047383,
+  "is_po_box": false
+ },
+ {
+  "zip": "37380",
+  "city": "South Pittsburg",
+  "minLat": 34.983197,
+  "maxLat": 35.229182,
+  "minLon": -85.863959,
+  "maxLon": -85.497641,
+  "is_po_box": false
+ },
+ {
+  "zip": "37381",
+  "city": "Spring City",
+  "minLat": 35.545377,
+  "maxLat": 35.80884,
+  "minLon": -85.07297,
+  "maxLon": -84.711472,
+  "is_po_box": false
+ },
+ {
+  "zip": "37385",
+  "city": "Tellico Plains",
+  "minLat": 35.204276,
+  "maxLat": 35.479408,
+  "minLon": -84.448379,
+  "maxLon": -84.02141,
+  "is_po_box": false
+ },
+ {
+  "zip": "37387",
+  "city": "Tracy City",
+  "minLat": 35.215295,
+  "maxLat": 35.317972,
+  "minLon": -85.838135,
+  "maxLon": -85.655553,
+  "is_po_box": false
+ },
+ {
+  "zip": "37388",
+  "city": "Tullahoma",
+  "minLat": 35.245252,
+  "maxLat": 35.45182,
+  "minLon": -86.361967,
+  "maxLon": -86.041589,
+  "is_po_box": false
+ },
+ {
+  "zip": "37391",
+  "city": "Turtletown",
+  "minLat": 35.028708,
+  "maxLat": 35.140326,
+  "minLon": -84.40427,
+  "maxLon": -84.304838,
+  "is_po_box": false
+ },
+ {
+  "zip": "37394",
+  "city": "Viola",
+  "minLat": 35.535965,
+  "maxLat": 35.541756,
+  "minLon": -85.865071,
+  "maxLon": -85.855749,
+  "is_po_box": false
+ },
+ {
+  "zip": "37396",
+  "city": "Whiteside",
+  "minLat": 34.98302,
+  "maxLat": 35.034789,
+  "minLon": -85.526507,
+  "maxLon": -85.468713,
+  "is_po_box": false
+ },
+ {
+  "zip": "37397",
+  "city": "Whitwell",
+  "minLat": 35.021876,
+  "maxLat": 35.357477,
+  "minLon": -85.645353,
+  "maxLon": -85.380736,
+  "is_po_box": false
+ },
+ {
+  "zip": "37398",
+  "city": "Winchester",
+  "minLat": 35.08326,
+  "maxLat": 35.298828,
+  "minLon": -86.365923,
+  "maxLon": -85.943841,
+  "is_po_box": false
+ },
+ {
+  "zip": "37402",
+  "city": "Chattanooga",
+  "minLat": 35.018626,
+  "maxLat": 35.058516,
+  "minLon": -85.333186,
+  "maxLon": -85.301674,
+  "is_po_box": false
+ },
+ {
+  "zip": "37403",
+  "city": "Chattanooga",
+  "minLat": 35.035746,
+  "maxLat": 35.058514,
+  "minLon": -85.309742,
+  "maxLon": -85.271298,
+  "is_po_box": false
+ },
+ {
+  "zip": "37404",
+  "city": "Chattanooga",
+  "minLat": 34.984881,
+  "maxLat": 35.063085,
+  "minLon": -85.301836,
+  "maxLon": -85.243083,
+  "is_po_box": false
+ },
+ {
+  "zip": "37405",
+  "city": "Chattanooga",
+  "minLat": 35.02073,
+  "maxLat": 35.234735,
+  "minLon": -85.486897,
+  "maxLon": -85.278256,
+  "is_po_box": false
+ },
+ {
+  "zip": "37406",
+  "city": "Chattanooga",
+  "minLat": 35.031384,
+  "maxLat": 35.106196,
+  "minLon": -85.288785,
+  "maxLon": -85.203994,
+  "is_po_box": false
+ },
+ {
+  "zip": "37407",
+  "city": "Chattanooga",
+  "minLat": 34.984469,
+  "maxLat": 35.02538,
+  "minLon": -85.306243,
+  "maxLon": -85.271507,
+  "is_po_box": false
+ },
+ {
+  "zip": "37408",
+  "city": "Chattanooga",
+  "minLat": 35.016395,
+  "maxLat": 35.039098,
+  "minLon": -85.333135,
+  "maxLon": -85.286018,
+  "is_po_box": false
+ },
+ {
+  "zip": "37409",
+  "city": "Chattanooga",
+  "minLat": 34.983035,
+  "maxLat": 35.022843,
+  "minLon": -85.379825,
+  "maxLon": -85.320229,
+  "is_po_box": false
+ },
+ {
+  "zip": "37410",
+  "city": "Chattanooga",
+  "minLat": 34.983976,
+  "maxLat": 35.023171,
+  "minLon": -85.327428,
+  "maxLon": -85.29987,
+  "is_po_box": false
+ },
+ {
+  "zip": "37411",
+  "city": "Chattanooga",
+  "minLat": 35.004036,
+  "maxLat": 35.056108,
+  "minLon": -85.261515,
+  "maxLon": -85.193889,
+  "is_po_box": false
+ },
+ {
+  "zip": "37412",
+  "city": "Chattanooga",
+  "minLat": 34.984975,
+  "maxLat": 35.02045,
+  "minLon": -85.275617,
+  "maxLon": -85.172306,
+  "is_po_box": false
+ },
+ {
+  "zip": "37415",
+  "city": "Chattanooga",
+  "minLat": 35.074781,
+  "maxLat": 35.186104,
+  "minLon": -85.32707,
+  "maxLon": -85.196442,
+  "is_po_box": false
+ },
+ {
+  "zip": "37416",
+  "city": "Chattanooga",
+  "minLat": 35.065046,
+  "maxLat": 35.154284,
+  "minLon": -85.22913,
+  "maxLon": -85.13848,
+  "is_po_box": false
+ },
+ {
+  "zip": "37419",
+  "city": "Chattanooga",
+  "minLat": 34.982924,
+  "maxLat": 35.121464,
+  "minLon": -85.51276,
+  "maxLon": -85.332801,
+  "is_po_box": false
+ },
+ {
+  "zip": "37421",
+  "city": "Chattanooga",
+  "minLat": 34.985974,
+  "maxLat": 35.078352,
+  "minLon": -85.224937,
+  "maxLon": -85.085709,
+  "is_po_box": false
+ },
+ {
+  "zip": "37601",
+  "city": "Johnson City",
+  "minLat": 36.239345,
+  "maxLat": 36.403119,
+  "minLon": -82.407513,
+  "maxLon": -82.246871,
+  "is_po_box": false
+ },
+ {
+  "zip": "37604",
+  "city": "Johnson City",
+  "minLat": 36.233144,
+  "maxLat": 36.378081,
+  "minLon": -82.445182,
+  "maxLon": -82.31838,
+  "is_po_box": false
+ },
+ {
+  "zip": "37614",
+  "city": "Johnson City",
+  "minLat": 36.296676,
+  "maxLat": 36.308228,
+  "minLon": -82.380669,
+  "maxLon": -82.362098,
+  "is_po_box": false
+ },
+ {
+  "zip": "37615",
+  "city": "Johnson City",
+  "minLat": 36.332511,
+  "maxLat": 36.447254,
+  "minLon": -82.52469,
+  "maxLon": -82.374351,
+  "is_po_box": false
+ },
+ {
+  "zip": "37616",
+  "city": "Afton",
+  "minLat": 36.090456,
+  "maxLat": 36.344887,
+  "minLon": -82.818084,
+  "maxLon": -82.669593,
+  "is_po_box": false
+ },
+ {
+  "zip": "37617",
+  "city": "Blountville",
+  "minLat": 36.45237,
+  "maxLat": 36.595609,
+  "minLon": -82.481915,
+  "maxLon": -82.282197,
+  "is_po_box": false
+ },
+ {
+  "zip": "37618",
+  "city": "Bluff City",
+  "minLat": 36.400407,
+  "maxLat": 36.53282,
+  "minLon": -82.320897,
+  "maxLon": -82.075348,
+  "is_po_box": false
+ },
+ {
+  "zip": "37620",
+  "city": "Bristol",
+  "minLat": 36.458612,
+  "maxLat": 36.616213,
+  "minLon": -82.322966,
+  "maxLon": -81.826641,
+  "is_po_box": false
+ },
+ {
+  "zip": "37640",
+  "city": "Butler",
+  "minLat": 36.211147,
+  "maxLat": 36.437627,
+  "minLon": -82.122699,
+  "maxLon": -81.862613,
+  "is_po_box": false
+ },
+ {
+  "zip": "37641",
+  "city": "Chuckey",
+  "minLat": 36.039833,
+  "maxLat": 36.406665,
+  "minLon": -82.752333,
+  "maxLon": -82.553596,
+  "is_po_box": false
+ },
+ {
+  "zip": "37642",
+  "city": "Church Hill",
+  "minLat": 36.429207,
+  "maxLat": 36.594099,
+  "minLon": -82.8296,
+  "maxLon": -82.599913,
+  "is_po_box": false
+ },
+ {
+  "zip": "37643",
+  "city": "Elizabethton",
+  "minLat": 36.224763,
+  "maxLat": 36.510614,
+  "minLon": -82.286488,
+  "maxLon": -81.94984,
+  "is_po_box": false
+ },
+ {
+  "zip": "37645",
+  "city": "Mount Carmel",
+  "minLat": 36.53513,
+  "maxLat": 36.587353,
+  "minLon": -82.695075,
+  "maxLon": -82.633445,
+  "is_po_box": false
+ },
+ {
+  "zip": "37650",
+  "city": "Erwin",
+  "minLat": 35.989035,
+  "maxLat": 36.199307,
+  "minLon": -82.595065,
+  "maxLon": -82.30814,
+  "is_po_box": false
+ },
+ {
+  "zip": "37656",
+  "city": "Fall Branch",
+  "minLat": 36.344851,
+  "maxLat": 36.446281,
+  "minLon": -82.709122,
+  "maxLon": -82.562352,
+  "is_po_box": false
+ },
+ {
+  "zip": "37657",
+  "city": "Flag Pond",
+  "minLat": 35.953901,
+  "maxLat": 36.093691,
+  "minLon": -82.615062,
+  "maxLon": -82.491001,
+  "is_po_box": false
+ },
+ {
+  "zip": "37658",
+  "city": "Hampton",
+  "minLat": 36.171377,
+  "maxLat": 36.335156,
+  "minLon": -82.268056,
+  "maxLon": -82.037366,
+  "is_po_box": false
+ },
+ {
+  "zip": "37659",
+  "city": "Jonesborough",
+  "minLat": 36.128754,
+  "maxLat": 36.445862,
+  "minLon": -82.608896,
+  "maxLon": -82.355761,
+  "is_po_box": false
+ },
+ {
+  "zip": "37660",
+  "city": "Kingsport",
+  "minLat": 36.431097,
+  "maxLat": 36.595826,
+  "minLon": -82.693806,
+  "maxLon": -82.399992,
+  "is_po_box": false
+ },
+ {
+  "zip": "37663",
+  "city": "Kingsport",
+  "minLat": 36.416813,
+  "maxLat": 36.516072,
+  "minLon": -82.563048,
+  "maxLon": -82.403094,
+  "is_po_box": false
+ },
+ {
+  "zip": "37664",
+  "city": "Kingsport",
+  "minLat": 36.432819,
+  "maxLat": 36.575338,
+  "minLon": -82.605983,
+  "maxLon": -82.395621,
+  "is_po_box": false
+ },
+ {
+  "zip": "37665",
+  "city": "Kingsport",
+  "minLat": 36.560707,
+  "maxLat": 36.594712,
+  "minLon": -82.592789,
+  "maxLon": -82.545576,
+  "is_po_box": false
+ },
+ {
+  "zip": "37680",
+  "city": "Laurel Bloomery",
+  "minLat": 36.518866,
+  "maxLat": 36.612922,
+  "minLon": -81.79679,
+  "maxLon": -81.6469,
+  "is_po_box": false
+ },
+ {
+  "zip": "37681",
+  "city": "Limestone",
+  "minLat": 36.149825,
+  "maxLat": 36.356347,
+  "minLon": -82.699776,
+  "maxLon": -82.543885,
+  "is_po_box": false
+ },
+ {
+  "zip": "37682",
+  "city": "Milligan College",
+  "minLat": 36.29734,
+  "maxLat": 36.306107,
+  "minLon": -82.29505,
+  "maxLon": -82.28616,
+  "is_po_box": false
+ },
+ {
+  "zip": "37683",
+  "city": "Mountain City",
+  "minLat": 36.330508,
+  "maxLat": 36.573604,
+  "minLon": -81.993904,
+  "maxLon": -81.694514,
+  "is_po_box": false
+ },
+ {
+  "zip": "37686",
+  "city": "Piney Flats",
+  "minLat": 36.392104,
+  "maxLat": 36.498936,
+  "minLon": -82.422038,
+  "maxLon": -82.279684,
+  "is_po_box": false
+ },
+ {
+  "zip": "37687",
+  "city": "Roan Mountain",
+  "minLat": 36.10302,
+  "maxLat": 36.269752,
+  "minLon": -82.227143,
+  "maxLon": -81.970749,
+  "is_po_box": false
+ },
+ {
+  "zip": "37688",
+  "city": "Shady Valley",
+  "minLat": 36.467638,
+  "maxLat": 36.614215,
+  "minLon": -81.987744,
+  "maxLon": -81.766699,
+  "is_po_box": false
+ },
+ {
+  "zip": "37690",
+  "city": "Telford",
+  "minLat": 36.14968,
+  "maxLat": 36.320846,
+  "minLon": -82.630491,
+  "maxLon": -82.488555,
+  "is_po_box": false
+ },
+ {
+  "zip": "37691",
+  "city": "Trade",
+  "minLat": 36.335122,
+  "maxLat": 36.428653,
+  "minLon": -81.793688,
+  "maxLon": -81.705239,
+  "is_po_box": false
+ },
+ {
+  "zip": "37692",
+  "city": "Unicoi",
+  "minLat": 36.119001,
+  "maxLat": 36.259196,
+  "minLon": -82.391561,
+  "maxLon": -82.221852,
+  "is_po_box": false
+ },
+ {
+  "zip": "37694",
+  "city": "Watauga",
+  "minLat": 36.344821,
+  "maxLat": 36.423515,
+  "minLon": -82.320476,
+  "maxLon": -82.236182,
+  "is_po_box": false
+ },
+ {
+  "zip": "37701",
+  "city": "Alcoa",
+  "minLat": 35.757711,
+  "maxLat": 35.844762,
+  "minLon": -84.015505,
+  "maxLon": -83.955746,
+  "is_po_box": false
+ },
+ {
+  "zip": "37705",
+  "city": "Andersonville",
+  "minLat": 36.162299,
+  "maxLat": 36.301779,
+  "minLon": -84.128662,
+  "maxLon": -83.915033,
+  "is_po_box": false
+ },
+ {
+  "zip": "37708",
+  "city": "Bean Station",
+  "minLat": 36.261995,
+  "maxLat": 36.394689,
+  "minLon": -83.440097,
+  "maxLon": -83.255292,
+  "is_po_box": false
+ },
+ {
+  "zip": "37709",
+  "city": "Blaine",
+  "minLat": 36.080587,
+  "maxLat": 36.236897,
+  "minLon": -83.732704,
+  "maxLon": -83.589615,
+  "is_po_box": false
+ },
+ {
+  "zip": "37710",
+  "city": "Briceville",
+  "minLat": 36.095377,
+  "maxLat": 36.221831,
+  "minLon": -84.449881,
+  "maxLon": -84.15936,
+  "is_po_box": false
+ },
+ {
+  "zip": "37711",
+  "city": "Bulls Gap",
+  "minLat": 36.221912,
+  "maxLat": 36.342574,
+  "minLon": -83.129488,
+  "maxLon": -82.922775,
+  "is_po_box": false
+ },
+ {
+  "zip": "37713",
+  "city": "Bybee",
+  "minLat": 36.027725,
+  "maxLat": 36.182395,
+  "minLon": -83.188531,
+  "maxLon": -83.05505,
+  "is_po_box": false
+ },
+ {
+  "zip": "37714",
+  "city": "Caryville",
+  "minLat": 36.177578,
+  "maxLat": 36.358859,
+  "minLon": -84.376633,
+  "maxLon": -84.141758,
+  "is_po_box": false
+ },
+ {
+  "zip": "37715",
+  "city": "Clairfield",
+  "minLat": 36.497002,
+  "maxLat": 36.590088,
+  "minLon": -84.044305,
+  "maxLon": -83.888273,
+  "is_po_box": false
+ },
+ {
+  "zip": "37716",
+  "city": "Clinton",
+  "minLat": 35.990883,
+  "maxLat": 36.202264,
+  "minLon": -84.318106,
+  "maxLon": -84.032945,
+  "is_po_box": false
+ },
+ {
+  "zip": "37719",
+  "city": "Coalfield",
+  "minLat": 36.011012,
+  "maxLat": 36.033752,
+  "minLon": -84.441716,
+  "maxLon": -84.413266,
+  "is_po_box": false
+ },
+ {
+  "zip": "37721",
+  "city": "Corryton",
+  "minLat": 36.069486,
+  "maxLat": 36.187665,
+  "minLon": -83.905225,
+  "maxLon": -83.717546,
+  "is_po_box": false
+ },
+ {
+  "zip": "37722",
+  "city": "Cosby",
+  "minLat": 35.712982,
+  "maxLat": 35.915198,
+  "minLon": -83.330468,
+  "maxLon": -83.099399,
+  "is_po_box": false
+ },
+ {
+  "zip": "37723",
+  "city": "Crab Orchard",
+  "minLat": 35.847961,
+  "maxLat": 36.056381,
+  "minLon": -84.917318,
+  "maxLon": -84.697945,
+  "is_po_box": false
+ },
+ {
+  "zip": "37724",
+  "city": "Cumberland Gap",
+  "minLat": 36.493845,
+  "maxLat": 36.60081,
+  "minLon": -83.81985,
+  "maxLon": -83.645286,
+  "is_po_box": false
+ },
+ {
+  "zip": "37725",
+  "city": "Dandridge",
+  "minLat": 35.895846,
+  "maxLat": 36.099989,
+  "minLon": -83.573082,
+  "maxLon": -83.258184,
+  "is_po_box": false
+ },
+ {
+  "zip": "37726",
+  "city": "Deer Lodge",
+  "minLat": 36.114678,
+  "maxLat": 36.304199,
+  "minLon": -84.944493,
+  "maxLon": -84.711274,
+  "is_po_box": false
+ },
+ {
+  "zip": "37727",
+  "city": "Del Rio",
+  "minLat": 35.773128,
+  "maxLat": 35.988729,
+  "minLon": -83.12757,
+  "maxLon": -82.896097,
+  "is_po_box": false
+ },
+ {
+  "zip": "37729",
+  "city": "Duff",
+  "minLat": 36.427785,
+  "maxLat": 36.587397,
+  "minLon": -84.132639,
+  "maxLon": -83.943139,
+  "is_po_box": false
+ },
+ {
+  "zip": "37730",
+  "city": "Eagan",
+  "minLat": 36.53755,
+  "maxLat": 36.555027,
+  "minLon": -83.980126,
+  "maxLon": -83.970092,
+  "is_po_box": false
+ },
+ {
+  "zip": "37731",
+  "city": "Eidson",
+  "minLat": 36.472022,
+  "maxLat": 36.593783,
+  "minLon": -83.128576,
+  "maxLon": -82.830433,
+  "is_po_box": false
+ },
+ {
+  "zip": "37732",
+  "city": "Elgin",
+  "minLat": 36.316676,
+  "maxLat": 36.338509,
+  "minLon": -84.617154,
+  "maxLon": -84.598719,
+  "is_po_box": false
+ },
+ {
+  "zip": "37733",
+  "city": "Rugby",
+  "minLat": 36.324151,
+  "maxLat": 36.376626,
+  "minLon": -84.732697,
+  "maxLon": -84.689675,
+  "is_po_box": false
+ },
+ {
+  "zip": "37737",
+  "city": "Friendsville",
+  "minLat": 35.713567,
+  "maxLat": 35.805386,
+  "minLon": -84.182721,
+  "maxLon": -84.02532,
+  "is_po_box": false
+ },
+ {
+  "zip": "37738",
+  "city": "Gatlinburg",
+  "minLat": 35.562684,
+  "maxLat": 35.784945,
+  "minLon": -83.663292,
+  "maxLon": -83.250695,
+  "is_po_box": false
+ },
+ {
+  "zip": "37742",
+  "city": "Greenback",
+  "minLat": 35.610549,
+  "maxLat": 35.740411,
+  "minLon": -84.262866,
+  "maxLon": -84.089525,
+  "is_po_box": false
+ },
+ {
+  "zip": "37743",
+  "city": "Greeneville",
+  "minLat": 35.921839,
+  "maxLat": 36.245836,
+  "minLon": -83.055604,
+  "maxLon": -82.647096,
+  "is_po_box": false
+ },
+ {
+  "zip": "37745",
+  "city": "Greeneville",
+  "minLat": 36.132186,
+  "maxLat": 36.4045,
+  "minLon": -82.953001,
+  "maxLon": -82.684397,
+  "is_po_box": false
+ },
+ {
+  "zip": "37748",
+  "city": "Harriman",
+  "minLat": 35.833116,
+  "maxLat": 36.058536,
+  "minLon": -84.637074,
+  "maxLon": -84.385502,
+  "is_po_box": false
+ },
+ {
+  "zip": "37752",
+  "city": "Harrogate",
+  "minLat": 36.505588,
+  "maxLat": 36.600369,
+  "minLon": -83.671963,
+  "maxLon": -83.324965,
+  "is_po_box": false
+ },
+ {
+  "zip": "37753",
+  "city": "Hartford",
+  "minLat": 35.775076,
+  "maxLat": 35.886559,
+  "minLon": -83.177485,
+  "maxLon": -83.017415,
+  "is_po_box": false
+ },
+ {
+  "zip": "37754",
+  "city": "Heiskell",
+  "minLat": 36.050805,
+  "maxLat": 36.222804,
+  "minLon": -84.105559,
+  "maxLon": -83.938146,
+  "is_po_box": false
+ },
+ {
+  "zip": "37755",
+  "city": "Helenwood",
+  "minLat": 36.318933,
+  "maxLat": 36.483048,
+  "minLon": -84.607794,
+  "maxLon": -84.444165,
+  "is_po_box": false
+ },
+ {
+  "zip": "37756",
+  "city": "Huntsville",
+  "minLat": 36.163478,
+  "maxLat": 36.42192,
+  "minLon": -84.536231,
+  "maxLon": -84.329927,
+  "is_po_box": false
+ },
+ {
+  "zip": "37757",
+  "city": "Jacksboro",
+  "minLat": 36.222613,
+  "maxLat": 36.36279,
+  "minLon": -84.216903,
+  "maxLon": -84.069218,
+  "is_po_box": false
+ },
+ {
+  "zip": "37760",
+  "city": "Jefferson City",
+  "minLat": 36.033032,
+  "maxLat": 36.178384,
+  "minLon": -83.528365,
+  "maxLon": -83.376245,
+  "is_po_box": false
+ },
+ {
+  "zip": "37762",
+  "city": "Jellico",
+  "minLat": 36.536601,
+  "maxLat": 36.591845,
+  "minLon": -84.197632,
+  "maxLon": -84.020983,
+  "is_po_box": false
+ },
+ {
+  "zip": "37763",
+  "city": "Kingston",
+  "minLat": 35.741534,
+  "maxLat": 35.913677,
+  "minLon": -84.643784,
+  "maxLon": -84.383366,
+  "is_po_box": false
+ },
+ {
+  "zip": "37764",
+  "city": "Kodak",
+  "minLat": 35.926262,
+  "maxLat": 36.017688,
+  "minLon": -83.700339,
+  "maxLon": -83.538712,
+  "is_po_box": false
+ },
+ {
+  "zip": "37765",
+  "city": "Kyles Ford",
+  "minLat": 36.536085,
+  "maxLat": 36.594039,
+  "minLon": -83.137154,
+  "maxLon": -82.949487,
+  "is_po_box": false
+ },
+ {
+  "zip": "37766",
+  "city": "La Follette",
+  "minLat": 36.246978,
+  "maxLat": 36.558437,
+  "minLon": -84.262171,
+  "maxLon": -83.948025,
+  "is_po_box": false
+ },
+ {
+  "zip": "37769",
+  "city": "Lake City",
+  "minLat": 36.16643,
+  "maxLat": 36.263006,
+  "minLon": -84.229926,
+  "maxLon": -84.073788,
+  "is_po_box": false
+ },
+ {
+  "zip": "37770",
+  "city": "Lancing",
+  "minLat": 36.072153,
+  "maxLat": 36.235294,
+  "minLon": -84.870888,
+  "maxLon": -84.458236,
+  "is_po_box": false
+ },
+ {
+  "zip": "37771",
+  "city": "Lenoir City",
+  "minLat": 35.755973,
+  "maxLat": 35.902984,
+  "minLon": -84.396123,
+  "maxLon": -84.236546,
+  "is_po_box": false
+ },
+ {
+  "zip": "37772",
+  "city": "Lenoir City",
+  "minLat": 35.691962,
+  "maxLat": 35.872711,
+  "minLon": -84.290654,
+  "maxLon": -84.165249,
+  "is_po_box": false
+ },
+ {
+  "zip": "37774",
+  "city": "Loudon",
+  "minLat": 35.641346,
+  "maxLat": 35.842479,
+  "minLon": -84.502884,
+  "maxLon": -84.243742,
+  "is_po_box": false
+ },
+ {
+  "zip": "37777",
+  "city": "Louisville",
+  "minLat": 35.772815,
+  "maxLat": 35.884087,
+  "minLon": -84.147198,
+  "maxLon": -83.945616,
+  "is_po_box": false
+ },
+ {
+  "zip": "37779",
+  "city": "Luttrell",
+  "minLat": 36.15165,
+  "maxLat": 36.289363,
+  "minLon": -83.848428,
+  "maxLon": -83.685607,
+  "is_po_box": false
+ },
+ {
+  "zip": "37801",
+  "city": "Maryville",
+  "minLat": 35.546974,
+  "maxLat": 35.820023,
+  "minLon": -84.225387,
+  "maxLon": -83.969212,
+  "is_po_box": false
+ },
+ {
+  "zip": "37803",
+  "city": "Maryville",
+  "minLat": 35.541105,
+  "maxLat": 35.758248,
+  "minLon": -84.094807,
+  "maxLon": -83.847891,
+  "is_po_box": false
+ },
+ {
+  "zip": "37804",
+  "city": "Maryville",
+  "minLat": 35.74454,
+  "maxLat": 35.845337,
+  "minLon": -83.977531,
+  "maxLon": -83.79999,
+  "is_po_box": false
+ },
+ {
+  "zip": "37806",
+  "city": "Mascot",
+  "minLat": 36.040624,
+  "maxLat": 36.124369,
+  "minLon": -83.790461,
+  "maxLon": -83.667026,
+  "is_po_box": false
+ },
+ {
+  "zip": "37807",
+  "city": "Maynardville",
+  "minLat": 36.157252,
+  "maxLat": 36.365681,
+  "minLon": -83.984615,
+  "maxLon": -83.667408,
+  "is_po_box": false
+ },
+ {
+  "zip": "37809",
+  "city": "Midway",
+  "minLat": 36.09208,
+  "maxLat": 36.215088,
+  "minLon": -83.125312,
+  "maxLon": -82.964156,
+  "is_po_box": false
+ },
+ {
+  "zip": "37810",
+  "city": "Mohawk",
+  "minLat": 36.122496,
+  "maxLat": 36.242805,
+  "minLon": -83.172685,
+  "maxLon": -83.027988,
+  "is_po_box": false
+ },
+ {
+  "zip": "37811",
+  "city": "Mooresburg",
+  "minLat": 36.281792,
+  "maxLat": 36.424516,
+  "minLon": -83.288896,
+  "maxLon": -83.096631,
+  "is_po_box": false
+ },
+ {
+  "zip": "37813",
+  "city": "Morristown",
+  "minLat": 36.117069,
+  "maxLat": 36.254248,
+  "minLon": -83.385727,
+  "maxLon": -83.174592,
+  "is_po_box": false
+ },
+ {
+  "zip": "37814",
+  "city": "Morristown",
+  "minLat": 36.157571,
+  "maxLat": 36.29669,
+  "minLon": -83.434002,
+  "maxLon": -83.214872,
+  "is_po_box": false
+ },
+ {
+  "zip": "37818",
+  "city": "Mosheim",
+  "minLat": 36.082336,
+  "maxLat": 36.289254,
+  "minLon": -83.067452,
+  "maxLon": -82.88668,
+  "is_po_box": false
+ },
+ {
+  "zip": "37819",
+  "city": "Newcomb",
+  "minLat": 36.492806,
+  "maxLat": 36.592049,
+  "minLon": -84.264633,
+  "maxLon": -84.154133,
+  "is_po_box": false
+ },
+ {
+  "zip": "37820",
+  "city": "New Market",
+  "minLat": 35.994455,
+  "maxLat": 36.191976,
+  "minLon": -83.643412,
+  "maxLon": -83.481416,
+  "is_po_box": false
+ },
+ {
+  "zip": "37821",
+  "city": "Newport",
+  "minLat": 35.812715,
+  "maxLat": 36.151095,
+  "minLon": -83.30295,
+  "maxLon": -83.072821,
+  "is_po_box": false
+ },
+ {
+  "zip": "37825",
+  "city": "New Tazewell",
+  "minLat": 36.331982,
+  "maxLat": 36.49702,
+  "minLon": -83.845795,
+  "maxLon": -83.574419,
+  "is_po_box": false
+ },
+ {
+  "zip": "37826",
+  "city": "Niota",
+  "minLat": 35.482012,
+  "maxLat": 35.641074,
+  "minLon": -84.69745,
+  "maxLon": -84.472038,
+  "is_po_box": false
+ },
+ {
+  "zip": "37828",
+  "city": "Norris",
+  "minLat": 36.182533,
+  "maxLat": 36.213803,
+  "minLon": -84.088908,
+  "maxLon": -84.046934,
+  "is_po_box": false
+ },
+ {
+  "zip": "37829",
+  "city": "Oakdale",
+  "minLat": 35.93015,
+  "maxLat": 36.066199,
+  "minLon": -84.740338,
+  "maxLon": -84.52585,
+  "is_po_box": false
+ },
+ {
+  "zip": "37830",
+  "city": "Oak Ridge",
+  "minLat": 35.874865,
+  "maxLat": 36.069826,
+  "minLon": -84.438401,
+  "maxLon": -84.156558,
+  "is_po_box": false
+ },
+ {
+  "zip": "37840",
+  "city": "Oliver Springs",
+  "minLat": 35.946321,
+  "maxLat": 36.134089,
+  "minLon": -84.509579,
+  "maxLon": -84.219688,
+  "is_po_box": false
+ },
+ {
+  "zip": "37841",
+  "city": "Oneida",
+  "minLat": 36.42218,
+  "maxLat": 36.603444,
+  "minLon": -84.78545,
+  "maxLon": -84.332789,
+  "is_po_box": false
+ },
+ {
+  "zip": "37843",
+  "city": "Parrottsville",
+  "minLat": 35.953811,
+  "maxLat": 36.087069,
+  "minLon": -83.161163,
+  "maxLon": -82.934357,
+  "is_po_box": false
+ },
+ {
+  "zip": "37845",
+  "city": "Petros",
+  "minLat": 36.083705,
+  "maxLat": 36.103893,
+  "minLon": -84.453661,
+  "maxLon": -84.423904,
+  "is_po_box": false
+ },
+ {
+  "zip": "37846",
+  "city": "Philadelphia",
+  "minLat": 35.61817,
+  "maxLat": 35.752099,
+  "minLon": -84.629744,
+  "maxLon": -84.310857,
+  "is_po_box": false
+ },
+ {
+  "zip": "37847",
+  "city": "Pioneer",
+  "minLat": 36.305791,
+  "maxLat": 36.548973,
+  "minLon": -84.460614,
+  "maxLon": -84.131662,
+  "is_po_box": false
+ },
+ {
+  "zip": "37848",
+  "city": "Powder Springs",
+  "minLat": 36.207583,
+  "maxLat": 36.260904,
+  "minLon": -83.716151,
+  "maxLon": -83.646616,
+  "is_po_box": false
+ },
+ {
+  "zip": "37849",
+  "city": "Powell",
+  "minLat": 35.995811,
+  "maxLat": 36.152907,
+  "minLon": -84.14558,
+  "maxLon": -83.95133,
+  "is_po_box": false
+ },
+ {
+  "zip": "37851",
+  "city": "Pruden",
+  "minLat": 36.574841,
+  "maxLat": 36.587075,
+  "minLon": -83.914179,
+  "maxLon": -83.896531,
+  "is_po_box": false
+ },
+ {
+  "zip": "37852",
+  "city": "Robbins",
+  "minLat": 36.203747,
+  "maxLat": 36.434089,
+  "minLon": -84.745512,
+  "maxLon": -84.443567,
+  "is_po_box": false
+ },
+ {
+  "zip": "37853",
+  "city": "Rockford",
+  "minLat": 35.805688,
+  "maxLat": 35.876402,
+  "minLon": -83.968057,
+  "maxLon": -83.848605,
+  "is_po_box": false
+ },
+ {
+  "zip": "37854",
+  "city": "Rockwood",
+  "minLat": 35.748582,
+  "maxLat": 36.001886,
+  "minLon": -84.858703,
+  "maxLon": -84.595176,
+  "is_po_box": false
+ },
+ {
+  "zip": "37857",
+  "city": "Rogersville",
+  "minLat": 36.285281,
+  "maxLat": 36.546294,
+  "minLon": -83.213445,
+  "maxLon": -82.610175,
+  "is_po_box": false
+ },
+ {
+  "zip": "37860",
+  "city": "Russellville",
+  "minLat": 36.176866,
+  "maxLat": 36.345292,
+  "minLon": -83.240092,
+  "maxLon": -83.124842,
+  "is_po_box": false
+ },
+ {
+  "zip": "37861",
+  "city": "Rutledge",
+  "minLat": 36.153623,
+  "maxLat": 36.335633,
+  "minLon": -83.65185,
+  "maxLon": -83.384751,
+  "is_po_box": false
+ },
+ {
+  "zip": "37862",
+  "city": "Sevierville",
+  "minLat": 35.685497,
+  "maxLat": 35.888947,
+  "minLon": -83.734186,
+  "maxLon": -83.482648,
+  "is_po_box": false
+ },
+ {
+  "zip": "37863",
+  "city": "Pigeon Forge",
+  "minLat": 35.726704,
+  "maxLat": 35.828803,
+  "minLon": -83.621331,
+  "maxLon": -83.514175,
+  "is_po_box": false
+ },
+ {
+  "zip": "37865",
+  "city": "Seymour",
+  "minLat": 35.766705,
+  "maxLat": 35.9447,
+  "minLon": -83.877158,
+  "maxLon": -83.650077,
+  "is_po_box": false
+ },
+ {
+  "zip": "37866",
+  "city": "Sharps Chapel",
+  "minLat": 36.275858,
+  "maxLat": 36.409757,
+  "minLon": -83.965626,
+  "maxLon": -83.732859,
+  "is_po_box": false
+ },
+ {
+  "zip": "37869",
+  "city": "Sneedville",
+  "minLat": 36.421977,
+  "maxLat": 36.598187,
+  "minLon": -83.419486,
+  "maxLon": -83.027906,
+  "is_po_box": false
+ },
+ {
+  "zip": "37870",
+  "city": "Speedwell",
+  "minLat": 36.385795,
+  "maxLat": 36.557718,
+  "minLon": -83.971979,
+  "maxLon": -83.679388,
+  "is_po_box": false
+ },
+ {
+  "zip": "37871",
+  "city": "Strawberry Plains",
+  "minLat": 35.97627,
+  "maxLat": 36.12666,
+  "minLon": -83.804253,
+  "maxLon": -83.604938,
+  "is_po_box": false
+ },
+ {
+  "zip": "37872",
+  "city": "Sunbright",
+  "minLat": 36.198524,
+  "maxLat": 36.33664,
+  "minLon": -84.795388,
+  "maxLon": -84.487182,
+  "is_po_box": false
+ },
+ {
+  "zip": "37873",
+  "city": "Surgoinsville",
+  "minLat": 36.436423,
+  "maxLat": 36.593768,
+  "minLon": -82.945467,
+  "maxLon": -82.761168,
+  "is_po_box": false
+ },
+ {
+  "zip": "37874",
+  "city": "Sweetwater",
+  "minLat": 35.499671,
+  "maxLat": 35.66886,
+  "minLon": -84.587318,
+  "maxLon": -84.290239,
+  "is_po_box": false
+ },
+ {
+  "zip": "37876",
+  "city": "Sevierville",
+  "minLat": 35.73832,
+  "maxLat": 36.001144,
+  "minLon": -83.70518,
+  "maxLon": -83.289993,
+  "is_po_box": false
+ },
+ {
+  "zip": "37877",
+  "city": "Talbott",
+  "minLat": 36.085334,
+  "maxLat": 36.222789,
+  "minLon": -83.47453,
+  "maxLon": -83.334251,
+  "is_po_box": false
+ },
+ {
+  "zip": "37878",
+  "city": "Tallassee",
+  "minLat": 35.499227,
+  "maxLat": 35.680081,
+  "minLon": -84.069185,
+  "maxLon": -83.804995,
+  "is_po_box": false
+ },
+ {
+  "zip": "37879",
+  "city": "Tazewell",
+  "minLat": 36.338493,
+  "maxLat": 36.597972,
+  "minLon": -83.691239,
+  "maxLon": -83.305225,
+  "is_po_box": false
+ },
+ {
+  "zip": "37880",
+  "city": "Ten Mile",
+  "minLat": 35.600015,
+  "maxLat": 35.816309,
+  "minLon": -84.786552,
+  "maxLon": -84.543487,
+  "is_po_box": false
+ },
+ {
+  "zip": "37881",
+  "city": "Thorn Hill",
+  "minLat": 36.322706,
+  "maxLat": 36.476339,
+  "minLon": -83.532706,
+  "maxLon": -83.14224,
+  "is_po_box": false
+ },
+ {
+  "zip": "37882",
+  "city": "Townsend",
+  "minLat": 35.473367,
+  "maxLat": 35.727776,
+  "minLon": -83.998814,
+  "maxLon": -83.662765,
+  "is_po_box": false
+ },
+ {
+  "zip": "37885",
+  "city": "Vonore",
+  "minLat": 35.345597,
+  "maxLat": 35.66423,
+  "minLon": -84.303471,
+  "maxLon": -83.93854,
+  "is_po_box": false
+ },
+ {
+  "zip": "37886",
+  "city": "Walland",
+  "minLat": 35.658184,
+  "maxLat": 35.833814,
+  "minLon": -83.908689,
+  "maxLon": -83.701344,
+  "is_po_box": false
+ },
+ {
+  "zip": "37887",
+  "city": "Wartburg",
+  "minLat": 36.012574,
+  "maxLat": 36.186542,
+  "minLon": -84.80546,
+  "maxLon": -84.425436,
+  "is_po_box": false
+ },
+ {
+  "zip": "37888",
+  "city": "Washburn",
+  "minLat": 36.242059,
+  "maxLat": 36.372584,
+  "minLon": -83.723194,
+  "maxLon": -83.486732,
+  "is_po_box": false
+ },
+ {
+  "zip": "37890",
+  "city": "White Pine",
+  "minLat": 36.002895,
+  "maxLat": 36.146017,
+  "minLon": -83.359993,
+  "maxLon": -83.225184,
+  "is_po_box": false
+ },
+ {
+  "zip": "37891",
+  "city": "Whitesburg",
+  "minLat": 36.201287,
+  "maxLat": 36.381574,
+  "minLon": -83.191171,
+  "maxLon": -83.080562,
+  "is_po_box": false
+ },
+ {
+  "zip": "37892",
+  "city": "Winfield",
+  "minLat": 36.499106,
+  "maxLat": 36.5966,
+  "minLon": -84.520921,
+  "maxLon": -84.249231,
+  "is_po_box": false
+ },
+ {
+  "zip": "37902",
+  "city": "Knoxville",
+  "minLat": 35.955505,
+  "maxLat": 35.972143,
+  "minLon": -83.929482,
+  "maxLon": -83.913541,
+  "is_po_box": false
+ },
+ {
+  "zip": "37909",
+  "city": "Knoxville",
+  "minLat": 35.925256,
+  "maxLat": 35.964252,
+  "minLon": -84.059761,
+  "maxLon": -83.952412,
+  "is_po_box": false
+ },
+ {
+  "zip": "37912",
+  "city": "Knoxville",
+  "minLat": 35.975305,
+  "maxLat": 36.039865,
+  "minLon": -84.031996,
+  "maxLon": -83.951311,
+  "is_po_box": false
+ },
+ {
+  "zip": "37914",
+  "city": "Knoxville",
+  "minLat": 35.936612,
+  "maxLat": 36.028397,
+  "minLon": -83.899371,
+  "maxLon": -83.685142,
+  "is_po_box": false
+ },
+ {
+  "zip": "37915",
+  "city": "Knoxville",
+  "minLat": 35.958591,
+  "maxLat": 35.982965,
+  "minLon": -83.916652,
+  "maxLon": -83.88183,
+  "is_po_box": false
+ },
+ {
+  "zip": "37916",
+  "city": "Knoxville",
+  "minLat": 35.942548,
+  "maxLat": 35.964755,
+  "minLon": -83.947056,
+  "maxLon": -83.9201,
+  "is_po_box": false
+ },
+ {
+  "zip": "37917",
+  "city": "Knoxville",
+  "minLat": 35.966487,
+  "maxLat": 36.032674,
+  "minLon": -83.958556,
+  "maxLon": -83.865204,
+  "is_po_box": false
+ },
+ {
+  "zip": "37918",
+  "city": "Knoxville",
+  "minLat": 35.996731,
+  "maxLat": 36.117566,
+  "minLon": -83.999158,
+  "maxLon": -83.827389,
+  "is_po_box": false
+ },
+ {
+  "zip": "37919",
+  "city": "Knoxville",
+  "minLat": 35.874856,
+  "maxLat": 35.963805,
+  "minLon": -84.068731,
+  "maxLon": -83.940445,
+  "is_po_box": false
+ },
+ {
+  "zip": "37920",
+  "city": "Knoxville",
+  "minLat": 35.841138,
+  "maxLat": 35.968002,
+  "minLon": -84.000987,
+  "maxLon": -83.694578,
+  "is_po_box": false
+ },
+ {
+  "zip": "37921",
+  "city": "Knoxville",
+  "minLat": 35.956308,
+  "maxLat": 36.016491,
+  "minLon": -84.061974,
+  "maxLon": -83.92495,
+  "is_po_box": false
+ },
+ {
+  "zip": "37922",
+  "city": "Knoxville",
+  "minLat": 35.793806,
+  "maxLat": 35.918204,
+  "minLon": -84.195349,
+  "maxLon": -84.006276,
+  "is_po_box": false
+ },
+ {
+  "zip": "37923",
+  "city": "Knoxville",
+  "minLat": 35.88397,
+  "maxLat": 35.970311,
+  "minLon": -84.129025,
+  "maxLon": -84.040505,
+  "is_po_box": false
+ },
+ {
+  "zip": "37924",
+  "city": "Knoxville",
+  "minLat": 36.002999,
+  "maxLat": 36.082576,
+  "minLon": -83.888064,
+  "maxLon": -83.714045,
+  "is_po_box": false
+ },
+ {
+  "zip": "37931",
+  "city": "Knoxville",
+  "minLat": 35.936594,
+  "maxLat": 36.014938,
+  "minLon": -84.220575,
+  "maxLon": -84.039371,
+  "is_po_box": false
+ },
+ {
+  "zip": "37932",
+  "city": "Knoxville",
+  "minLat": 35.8767,
+  "maxLat": 35.966791,
+  "minLon": -84.27347,
+  "maxLon": -84.113378,
+  "is_po_box": false
+ },
+ {
+  "zip": "37934",
+  "city": "",
+  "minLat": 35.834689,
+  "maxLat": 35.906238,
+  "minLon": -84.240811,
+  "maxLon": -84.119855,
+  "is_po_box": false
+ },
+ {
+  "zip": "37938",
+  "city": "Knoxville",
+  "minLat": 36.039177,
+  "maxLat": 36.186479,
+  "minLon": -83.993496,
+  "maxLon": -83.862048,
+  "is_po_box": false
+ },
+ {
+  "zip": "38001",
+  "city": "Alamo",
+  "minLat": 35.741939,
+  "maxLat": 35.905477,
+  "minLon": -89.269168,
+  "maxLon": -89.065279,
+  "is_po_box": false
+ },
+ {
+  "zip": "38002",
+  "city": "Arlington",
+  "minLat": 35.194755,
+  "maxLat": 35.388885,
+  "minLon": -89.889429,
+  "maxLon": -89.553775,
+  "is_po_box": false
+ },
+ {
+  "zip": "38004",
+  "city": "Atoka",
+  "minLat": 35.376568,
+  "maxLat": 35.472375,
+  "minLon": -89.849046,
+  "maxLon": -89.704145,
+  "is_po_box": false
+ },
+ {
+  "zip": "38006",
+  "city": "Bells",
+  "minLat": 35.572166,
+  "maxLat": 35.773164,
+  "minLon": -89.268053,
+  "maxLon": -88.94964,
+  "is_po_box": false
+ },
+ {
+  "zip": "38007",
+  "city": "Bogota",
+  "minLat": 36.135713,
+  "maxLat": 36.173827,
+  "minLon": -89.441303,
+  "maxLon": -89.405545,
+  "is_po_box": false
+ },
+ {
+  "zip": "38008",
+  "city": "Bolivar",
+  "minLat": 35.13881,
+  "maxLat": 35.362268,
+  "minLon": -89.172091,
+  "maxLon": -88.818374,
+  "is_po_box": false
+ },
+ {
+  "zip": "38011",
+  "city": "Brighton",
+  "minLat": 35.363942,
+  "maxLat": 35.558477,
+  "minLon": -89.843897,
+  "maxLon": -89.622638,
+  "is_po_box": false
+ },
+ {
+  "zip": "38012",
+  "city": "Brownsville",
+  "minLat": 35.432067,
+  "maxLat": 35.793665,
+  "minLon": -89.502118,
+  "maxLon": -89.073463,
+  "is_po_box": false
+ },
+ {
+  "zip": "38015",
+  "city": "Burlison",
+  "minLat": 35.503642,
+  "maxLat": 35.625184,
+  "minLon": -89.909797,
+  "maxLon": -89.750081,
+  "is_po_box": false
+ },
+ {
+  "zip": "38016",
+  "city": "Cordova",
+  "minLat": 35.153948,
+  "maxLat": 35.205892,
+  "minLon": -89.836436,
+  "maxLon": -89.695685,
+  "is_po_box": false
+ },
+ {
+  "zip": "38017",
+  "city": "Collierville",
+  "minLat": 34.994746,
+  "maxLat": 35.179338,
+  "minLon": -89.75978,
+  "maxLon": -89.554351,
+  "is_po_box": false
+ },
+ {
+  "zip": "38018",
+  "city": "Cordova",
+  "minLat": 35.103028,
+  "maxLat": 35.170679,
+  "minLon": -89.837121,
+  "maxLon": -89.708276,
+  "is_po_box": false
+ },
+ {
+  "zip": "38019",
+  "city": "Covington",
+  "minLat": 35.44711,
+  "maxLat": 35.652346,
+  "minLon": -89.807594,
+  "maxLon": -89.469862,
+  "is_po_box": false
+ },
+ {
+  "zip": "38021",
+  "city": "Crockett Mills",
+  "minLat": 35.866321,
+  "maxLat": 35.884647,
+  "minLon": -89.170793,
+  "maxLon": -89.159589,
+  "is_po_box": false
+ },
+ {
+  "zip": "38023",
+  "city": "Drummonds",
+  "minLat": 35.390628,
+  "maxLat": 35.561193,
+  "minLon": -90.050437,
+  "maxLon": -89.83413,
+  "is_po_box": false
+ },
+ {
+  "zip": "38024",
+  "city": "Dyersburg",
+  "minLat": 35.880934,
+  "maxLat": 36.159824,
+  "minLon": -89.532881,
+  "maxLon": -89.235861,
+  "is_po_box": false
+ },
+ {
+  "zip": "38028",
+  "city": "Eads",
+  "minLat": 35.091369,
+  "maxLat": 35.259635,
+  "minLon": -89.745339,
+  "maxLon": -89.52807,
+  "is_po_box": false
+ },
+ {
+  "zip": "38029",
+  "city": "Ellendale",
+  "minLat": 35.236537,
+  "maxLat": 35.241507,
+  "minLon": -89.825053,
+  "maxLon": -89.819049,
+  "is_po_box": false
+ },
+ {
+  "zip": "38030",
+  "city": "Finley",
+  "minLat": 35.904351,
+  "maxLat": 36.186062,
+  "minLon": -89.733095,
+  "maxLon": -89.434179,
+  "is_po_box": false
+ },
+ {
+  "zip": "38034",
+  "city": "Friendship",
+  "minLat": 35.799575,
+  "maxLat": 36.011814,
+  "minLon": -89.337671,
+  "maxLon": -89.124693,
+  "is_po_box": false
+ },
+ {
+  "zip": "38036",
+  "city": "Gallaway",
+  "minLat": 35.310435,
+  "maxLat": 35.329511,
+  "minLon": -89.63592,
+  "maxLon": -89.61539,
+  "is_po_box": false
+ },
+ {
+  "zip": "38037",
+  "city": "Gates",
+  "minLat": 35.723227,
+  "maxLat": 35.865973,
+  "minLon": -89.471104,
+  "maxLon": -89.328752,
+  "is_po_box": false
+ },
+ {
+  "zip": "38039",
+  "city": "Grand Junction",
+  "minLat": 34.993926,
+  "maxLat": 35.140271,
+  "minLon": -89.298332,
+  "maxLon": -89.088681,
+  "is_po_box": false
+ },
+ {
+  "zip": "38040",
+  "city": "Halls",
+  "minLat": 35.754733,
+  "maxLat": 35.999837,
+  "minLon": -89.637137,
+  "maxLon": -89.242294,
+  "is_po_box": false
+ },
+ {
+  "zip": "38041",
+  "city": "Henning",
+  "minLat": 35.537561,
+  "maxLat": 35.718821,
+  "minLon": -89.957954,
+  "maxLon": -89.468877,
+  "is_po_box": false
+ },
+ {
+  "zip": "38042",
+  "city": "Hickory Valley",
+  "minLat": 35.081508,
+  "maxLat": 35.203102,
+  "minLon": -89.250477,
+  "maxLon": -89.061526,
+  "is_po_box": false
+ },
+ {
+  "zip": "38044",
+  "city": "Hornsby",
+  "minLat": 35.105348,
+  "maxLat": 35.30788,
+  "minLon": -88.864786,
+  "maxLon": -88.744425,
+  "is_po_box": false
+ },
+ {
+  "zip": "38046",
+  "city": "La Grange",
+  "minLat": 35.034944,
+  "maxLat": 35.098431,
+  "minLon": -89.274685,
+  "maxLon": -89.208089,
+  "is_po_box": false
+ },
+ {
+  "zip": "38047",
+  "city": "Lenox",
+  "minLat": 36.075617,
+  "maxLat": 36.104471,
+  "minLon": -89.512492,
+  "maxLon": -89.494328,
+  "is_po_box": false
+ },
+ {
+  "zip": "38049",
+  "city": "Mason",
+  "minLat": 35.292231,
+  "maxLat": 35.504364,
+  "minLon": -89.646,
+  "maxLon": -89.411441,
+  "is_po_box": false
+ },
+ {
+  "zip": "38050",
+  "city": "Maury City",
+  "minLat": 35.809583,
+  "maxLat": 35.847899,
+  "minLon": -89.246193,
+  "maxLon": -89.218451,
+  "is_po_box": false
+ },
+ {
+  "zip": "38052",
+  "city": "Middleton",
+  "minLat": 34.994822,
+  "maxLat": 35.21423,
+  "minLon": -89.065397,
+  "maxLon": -88.786675,
+  "is_po_box": false
+ },
+ {
+  "zip": "38053",
+  "city": "Millington",
+  "minLat": 35.210772,
+  "maxLat": 35.515952,
+  "minLon": -90.169079,
+  "maxLon": -89.696771,
+  "is_po_box": false
+ },
+ {
+  "zip": "38054",
+  "city": "Millington",
+  "minLat": 35.331597,
+  "maxLat": 35.3405,
+  "minLon": -89.880358,
+  "maxLon": -89.863261,
+  "is_po_box": false
+ },
+ {
+  "zip": "38057",
+  "city": "Moscow",
+  "minLat": 34.993754,
+  "maxLat": 35.159334,
+  "minLon": -89.494291,
+  "maxLon": -89.232629,
+  "is_po_box": false
+ },
+ {
+  "zip": "38058",
+  "city": "Munford",
+  "minLat": 35.397468,
+  "maxLat": 35.5153,
+  "minLon": -89.876819,
+  "maxLon": -89.754607,
+  "is_po_box": false
+ },
+ {
+  "zip": "38059",
+  "city": "Newbern",
+  "minLat": 35.983759,
+  "maxLat": 36.207417,
+  "minLon": -89.410828,
+  "maxLon": -89.114069,
+  "is_po_box": false
+ },
+ {
+  "zip": "38060",
+  "city": "Oakland",
+  "minLat": 35.143558,
+  "maxLat": 35.292908,
+  "minLon": -89.585201,
+  "maxLon": -89.417695,
+  "is_po_box": false
+ },
+ {
+  "zip": "38061",
+  "city": "Pocahontas",
+  "minLat": 34.995085,
+  "maxLat": 35.158398,
+  "minLon": -88.858245,
+  "maxLon": -88.6906,
+  "is_po_box": false
+ },
+ {
+  "zip": "38063",
+  "city": "Ripley",
+  "minLat": 35.593132,
+  "maxLat": 35.9242,
+  "minLon": -89.958879,
+  "maxLon": -89.352927,
+  "is_po_box": false
+ },
+ {
+  "zip": "38066",
+  "city": "Rossville",
+  "minLat": 34.993968,
+  "maxLat": 35.173352,
+  "minLon": -89.594822,
+  "maxLon": -89.467949,
+  "is_po_box": false
+ },
+ {
+  "zip": "38067",
+  "city": "Saulsbury",
+  "minLat": 34.994727,
+  "maxLat": 35.200228,
+  "minLon": -89.132953,
+  "maxLon": -88.972172,
+  "is_po_box": false
+ },
+ {
+  "zip": "38068",
+  "city": "Somerville",
+  "minLat": 35.085429,
+  "maxLat": 35.400588,
+  "minLon": -89.547407,
+  "maxLon": -89.183944,
+  "is_po_box": false
+ },
+ {
+  "zip": "38069",
+  "city": "Stanton",
+  "minLat": 35.397776,
+  "maxLat": 35.551028,
+  "minLon": -89.520387,
+  "maxLon": -89.195965,
+  "is_po_box": false
+ },
+ {
+  "zip": "38070",
+  "city": "Tigrett",
+  "minLat": 35.930452,
+  "maxLat": 35.953396,
+  "minLon": -89.254588,
+  "maxLon": -89.227424,
+  "is_po_box": false
+ },
+ {
+  "zip": "38075",
+  "city": "Whiteville",
+  "minLat": 35.17751,
+  "maxLat": 35.524722,
+  "minLon": -89.260802,
+  "maxLon": -89.037602,
+  "is_po_box": false
+ },
+ {
+  "zip": "38076",
+  "city": "Williston",
+  "minLat": 35.069638,
+  "maxLat": 35.186603,
+  "minLon": -89.50327,
+  "maxLon": -89.363507,
+  "is_po_box": false
+ },
+ {
+  "zip": "38077",
+  "city": "Wynnburg",
+  "minLat": 36.326234,
+  "maxLat": 36.329751,
+  "minLon": -89.475766,
+  "maxLon": -89.473143,
+  "is_po_box": false
+ },
+ {
+  "zip": "38079",
+  "city": "Tiptonville",
+  "minLat": 36.282812,
+  "maxLat": 36.503232,
+  "minLon": -89.570804,
+  "maxLon": -89.340158,
+  "is_po_box": false
+ },
+ {
+  "zip": "38080",
+  "city": "Ridgely",
+  "minLat": 36.044607,
+  "maxLat": 36.367968,
+  "minLon": -89.705545,
+  "maxLon": -89.378518,
+  "is_po_box": false
+ },
+ {
+  "zip": "38103",
+  "city": "Memphis",
+  "minLat": 35.124855,
+  "maxLat": 35.185509,
+  "minLon": -90.075977,
+  "maxLon": -90.027612,
+  "is_po_box": false
+ },
+ {
+  "zip": "38104",
+  "city": "Memphis",
+  "minLat": 35.115873,
+  "maxLat": 35.155992,
+  "minLon": -90.035285,
+  "maxLon": -89.970055,
+  "is_po_box": false
+ },
+ {
+  "zip": "38105",
+  "city": "Memphis",
+  "minLat": 35.140695,
+  "maxLat": 35.163889,
+  "minLon": -90.054424,
+  "maxLon": -90.014915,
+  "is_po_box": false
+ },
+ {
+  "zip": "38106",
+  "city": "Memphis",
+  "minLat": 35.06358,
+  "maxLat": 35.135139,
+  "minLon": -90.188626,
+  "maxLon": -90.001735,
+  "is_po_box": false
+ },
+ {
+  "zip": "38107",
+  "city": "Memphis",
+  "minLat": 35.153886,
+  "maxLat": 35.191,
+  "minLon": -90.050919,
+  "maxLon": -89.98565,
+  "is_po_box": false
+ },
+ {
+  "zip": "38108",
+  "city": "Memphis",
+  "minLat": 35.156816,
+  "maxLat": 35.191107,
+  "minLon": -90.018039,
+  "maxLon": -89.912155,
+  "is_po_box": false
+ },
+ {
+  "zip": "38109",
+  "city": "Memphis",
+  "minLat": 34.994684,
+  "maxLat": 35.113442,
+  "minLon": -90.310298,
+  "maxLon": -90.035231,
+  "is_po_box": false
+ },
+ {
+  "zip": "38111",
+  "city": "Memphis",
+  "minLat": 35.078243,
+  "maxLat": 35.142803,
+  "minLon": -89.98035,
+  "maxLon": -89.915838,
+  "is_po_box": false
+ },
+ {
+  "zip": "38112",
+  "city": "Memphis",
+  "minLat": 35.127535,
+  "maxLat": 35.164105,
+  "minLon": -90.012424,
+  "maxLon": -89.951008,
+  "is_po_box": false
+ },
+ {
+  "zip": "38114",
+  "city": "Memphis",
+  "minLat": 35.072927,
+  "maxLat": 35.124119,
+  "minLon": -90.015968,
+  "maxLon": -89.955955,
+  "is_po_box": false
+ },
+ {
+  "zip": "38115",
+  "city": "Memphis",
+  "minLat": 35.034797,
+  "maxLat": 35.083347,
+  "minLon": -89.906984,
+  "maxLon": -89.828329,
+  "is_po_box": false
+ },
+ {
+  "zip": "38116",
+  "city": "Memphis",
+  "minLat": 34.994858,
+  "maxLat": 35.076666,
+  "minLon": -90.052002,
+  "maxLon": -89.965865,
+  "is_po_box": false
+ },
+ {
+  "zip": "38117",
+  "city": "Memphis",
+  "minLat": 35.077793,
+  "maxLat": 35.148885,
+  "minLon": -89.930575,
+  "maxLon": -89.883377,
+  "is_po_box": false
+ },
+ {
+  "zip": "38118",
+  "city": "Memphis",
+  "minLat": 34.994259,
+  "maxLat": 35.082136,
+  "minLon": -89.990132,
+  "maxLon": -89.865146,
+  "is_po_box": false
+ },
+ {
+  "zip": "38119",
+  "city": "Memphis",
+  "minLat": 35.048641,
+  "maxLat": 35.110364,
+  "minLon": -89.892974,
+  "maxLon": -89.79316,
+  "is_po_box": false
+ },
+ {
+  "zip": "38120",
+  "city": "Memphis",
+  "minLat": 35.099325,
+  "maxLat": 35.156481,
+  "minLon": -89.888405,
+  "maxLon": -89.796971,
+  "is_po_box": false
+ },
+ {
+  "zip": "38122",
+  "city": "Memphis",
+  "minLat": 35.139211,
+  "maxLat": 35.184791,
+  "minLon": -89.956875,
+  "maxLon": -89.879538,
+  "is_po_box": false
+ },
+ {
+  "zip": "38125",
+  "city": "Memphis",
+  "minLat": 34.994315,
+  "maxLat": 35.063803,
+  "minLon": -89.831252,
+  "maxLon": -89.733168,
+  "is_po_box": false
+ },
+ {
+  "zip": "38126",
+  "city": "Memphis",
+  "minLat": 35.115644,
+  "maxLat": 35.137665,
+  "minLon": -90.059127,
+  "maxLon": -90.030743,
+  "is_po_box": false
+ },
+ {
+  "zip": "38127",
+  "city": "Memphis",
+  "minLat": 35.178953,
+  "maxLat": 35.300451,
+  "minLon": -90.071744,
+  "maxLon": -89.962801,
+  "is_po_box": false
+ },
+ {
+  "zip": "38128",
+  "city": "Memphis",
+  "minLat": 35.17291,
+  "maxLat": 35.275162,
+  "minLon": -89.968761,
+  "maxLon": -89.877613,
+  "is_po_box": false
+ },
+ {
+  "zip": "38131",
+  "city": "Memphis",
+  "minLat": 35.060575,
+  "maxLat": 35.072103,
+  "minLon": -89.994985,
+  "maxLon": -89.987589,
+  "is_po_box": false
+ },
+ {
+  "zip": "38132",
+  "city": "Memphis",
+  "minLat": 35.063705,
+  "maxLat": 35.076326,
+  "minLon": -90.022572,
+  "maxLon": -89.985583,
+  "is_po_box": false
+ },
+ {
+  "zip": "38133",
+  "city": "Memphis",
+  "minLat": 35.17534,
+  "maxLat": 35.242477,
+  "minLon": -89.841115,
+  "maxLon": -89.742715,
+  "is_po_box": false
+ },
+ {
+  "zip": "38134",
+  "city": "Memphis",
+  "minLat": 35.131967,
+  "maxLat": 35.22134,
+  "minLon": -89.898562,
+  "maxLon": -89.796042,
+  "is_po_box": false
+ },
+ {
+  "zip": "38135",
+  "city": "Memphis",
+  "minLat": 35.205424,
+  "maxLat": 35.276698,
+  "minLon": -89.895442,
+  "maxLon": -89.793228,
+  "is_po_box": false
+ },
+ {
+  "zip": "38138",
+  "city": "Germantown",
+  "minLat": 35.047213,
+  "maxLat": 35.121403,
+  "minLon": -89.845639,
+  "maxLon": -89.738379,
+  "is_po_box": false
+ },
+ {
+  "zip": "38139",
+  "city": "Germantown",
+  "minLat": 35.047123,
+  "maxLat": 35.110867,
+  "minLon": -89.790935,
+  "maxLon": -89.729541,
+  "is_po_box": false
+ },
+ {
+  "zip": "38141",
+  "city": "Memphis",
+  "minLat": 34.994188,
+  "maxLat": 35.035031,
+  "minLon": -89.886162,
+  "maxLon": -89.822256,
+  "is_po_box": false
+ },
+ {
+  "zip": "38152",
+  "city": "Memphis",
+  "minLat": 35.118446,
+  "maxLat": 35.125382,
+  "minLon": -89.940678,
+  "maxLon": -89.928294,
+  "is_po_box": false
+ },
+ {
+  "zip": "38201",
+  "city": "Mc Kenzie",
+  "minLat": 36.016645,
+  "maxLat": 36.271297,
+  "minLon": -88.709938,
+  "maxLon": -88.333384,
+  "is_po_box": false
+ },
+ {
+  "zip": "38220",
+  "city": "Atwood",
+  "minLat": 35.928689,
+  "maxLat": 36.070733,
+  "minLon": -88.738208,
+  "maxLon": -88.581177,
+  "is_po_box": false
+ },
+ {
+  "zip": "38221",
+  "city": "Big Sandy",
+  "minLat": 36.126631,
+  "maxLat": 36.360254,
+  "minLon": -88.147987,
+  "maxLon": -87.937603,
+  "is_po_box": false
+ },
+ {
+  "zip": "38222",
+  "city": "Buchanan",
+  "minLat": 36.35051,
+  "maxLat": 36.5004,
+  "minLon": -88.300823,
+  "maxLon": -88.040219,
+  "is_po_box": false
+ },
+ {
+  "zip": "38224",
+  "city": "Cottage Grove",
+  "minLat": 36.300594,
+  "maxLat": 36.501583,
+  "minLon": -88.559991,
+  "maxLon": -88.414018,
+  "is_po_box": false
+ },
+ {
+  "zip": "38225",
+  "city": "Dresden",
+  "minLat": 36.21728,
+  "maxLat": 36.45681,
+  "minLon": -88.779659,
+  "maxLon": -88.535257,
+  "is_po_box": false
+ },
+ {
+  "zip": "38226",
+  "city": "Dukedom",
+  "minLat": 36.432314,
+  "maxLat": 36.502669,
+  "minLon": -88.762164,
+  "maxLon": -88.580446,
+  "is_po_box": false
+ },
+ {
+  "zip": "38229",
+  "city": "Gleason",
+  "minLat": 36.154223,
+  "maxLat": 36.302505,
+  "minLon": -88.713066,
+  "maxLon": -88.523587,
+  "is_po_box": false
+ },
+ {
+  "zip": "38230",
+  "city": "Greenfield",
+  "minLat": 36.062643,
+  "maxLat": 36.239607,
+  "minLon": -88.941404,
+  "maxLon": -88.65752,
+  "is_po_box": false
+ },
+ {
+  "zip": "38231",
+  "city": "Henry",
+  "minLat": 36.14878,
+  "maxLat": 36.282346,
+  "minLon": -88.527542,
+  "maxLon": -88.317827,
+  "is_po_box": false
+ },
+ {
+  "zip": "38232",
+  "city": "Hornbeak",
+  "minLat": 36.284371,
+  "maxLat": 36.442324,
+  "minLon": -89.405166,
+  "maxLon": -89.246903,
+  "is_po_box": false
+ },
+ {
+  "zip": "38233",
+  "city": "Kenton",
+  "minLat": 36.117185,
+  "maxLat": 36.281958,
+  "minLon": -89.194913,
+  "maxLon": -88.892322,
+  "is_po_box": false
+ },
+ {
+  "zip": "38235",
+  "city": "Mc Lemoresville",
+  "minLat": 35.965856,
+  "maxLat": 36.017007,
+  "minLon": -88.627188,
+  "maxLon": -88.518844,
+  "is_po_box": false
+ },
+ {
+  "zip": "38236",
+  "city": "Mansfield",
+  "minLat": 36.12029,
+  "maxLat": 36.224252,
+  "minLon": -88.376038,
+  "maxLon": -88.167553,
+  "is_po_box": false
+ },
+ {
+  "zip": "38237",
+  "city": "Martin",
+  "minLat": 36.264657,
+  "maxLat": 36.502729,
+  "minLon": -88.956614,
+  "maxLon": -88.706753,
+  "is_po_box": false
+ },
+ {
+  "zip": "38240",
+  "city": "Obion",
+  "minLat": 36.182481,
+  "maxLat": 36.312075,
+  "minLon": -89.485832,
+  "maxLon": -89.162624,
+  "is_po_box": false
+ },
+ {
+  "zip": "38241",
+  "city": "Palmersville",
+  "minLat": 36.325743,
+  "maxLat": 36.502176,
+  "minLon": -88.68221,
+  "maxLon": -88.516302,
+  "is_po_box": false
+ },
+ {
+  "zip": "38242",
+  "city": "Paris",
+  "minLat": 36.184697,
+  "maxLat": 36.420357,
+  "minLon": -88.583625,
+  "maxLon": -88.143902,
+  "is_po_box": false
+ },
+ {
+  "zip": "38251",
+  "city": "Puryear",
+  "minLat": 36.361725,
+  "maxLat": 36.50123,
+  "minLon": -88.487513,
+  "maxLon": -88.214661,
+  "is_po_box": false
+ },
+ {
+  "zip": "38253",
+  "city": "Rives",
+  "minLat": 36.223926,
+  "maxLat": 36.364578,
+  "minLon": -89.182134,
+  "maxLon": -88.954084,
+  "is_po_box": false
+ },
+ {
+  "zip": "38254",
+  "city": "Samburg",
+  "minLat": 36.366096,
+  "maxLat": 36.383203,
+  "minLon": -89.357062,
+  "maxLon": -89.339983,
+  "is_po_box": false
+ },
+ {
+  "zip": "38255",
+  "city": "Sharon",
+  "minLat": 36.19486,
+  "maxLat": 36.287181,
+  "minLon": -88.959839,
+  "maxLon": -88.766392,
+  "is_po_box": false
+ },
+ {
+  "zip": "38256",
+  "city": "Springville",
+  "minLat": 36.160995,
+  "maxLat": 36.424898,
+  "minLon": -88.226677,
+  "maxLon": -87.99092,
+  "is_po_box": false
+ },
+ {
+  "zip": "38257",
+  "city": "South Fulton",
+  "minLat": 36.392854,
+  "maxLat": 36.502709,
+  "minLon": -88.986938,
+  "maxLon": -88.768551,
+  "is_po_box": false
+ },
+ {
+  "zip": "38258",
+  "city": "Trezevant",
+  "minLat": 35.97959,
+  "maxLat": 36.072752,
+  "minLon": -88.675766,
+  "maxLon": -88.537954,
+  "is_po_box": false
+ },
+ {
+  "zip": "38259",
+  "city": "Trimble",
+  "minLat": 36.138708,
+  "maxLat": 36.251334,
+  "minLon": -89.267259,
+  "maxLon": -89.114058,
+  "is_po_box": false
+ },
+ {
+  "zip": "38260",
+  "city": "Troy",
+  "minLat": 36.281048,
+  "maxLat": 36.45949,
+  "minLon": -89.301616,
+  "maxLon": -89.103696,
+  "is_po_box": false
+ },
+ {
+  "zip": "38261",
+  "city": "Union City",
+  "minLat": 36.293539,
+  "maxLat": 36.507233,
+  "minLon": -89.373495,
+  "maxLon": -88.907331,
+  "is_po_box": false
+ },
+ {
+  "zip": "38301",
+  "city": "Jackson",
+  "minLat": 35.456885,
+  "maxLat": 35.693216,
+  "minLon": -89.072082,
+  "maxLon": -88.652279,
+  "is_po_box": false
+ },
+ {
+  "zip": "38305",
+  "city": "Jackson",
+  "minLat": 35.615155,
+  "maxLat": 35.810601,
+  "minLon": -88.979126,
+  "maxLon": -88.599627,
+  "is_po_box": false
+ },
+ {
+  "zip": "38310",
+  "city": "Adamsville",
+  "minLat": 35.123039,
+  "maxLat": 35.364458,
+  "minLon": -88.543103,
+  "maxLon": -88.254339,
+  "is_po_box": false
+ },
+ {
+  "zip": "38311",
+  "city": "Bath Springs",
+  "minLat": 35.379557,
+  "maxLat": 35.510947,
+  "minLon": -88.247986,
+  "maxLon": -87.973414,
+  "is_po_box": false
+ },
+ {
+  "zip": "38313",
+  "city": "Beech Bluff",
+  "minLat": 35.488207,
+  "maxLat": 35.709859,
+  "minLon": -88.707002,
+  "maxLon": -88.541474,
+  "is_po_box": false
+ },
+ {
+  "zip": "38315",
+  "city": "Bethel Springs",
+  "minLat": 35.191432,
+  "maxLat": 35.354051,
+  "minLon": -88.782516,
+  "maxLon": -88.472121,
+  "is_po_box": false
+ },
+ {
+  "zip": "38316",
+  "city": "Bradford",
+  "minLat": 35.99362,
+  "maxLat": 36.133657,
+  "minLon": -88.954511,
+  "maxLon": -88.708313,
+  "is_po_box": false
+ },
+ {
+  "zip": "38317",
+  "city": "Bruceton",
+  "minLat": 35.994718,
+  "maxLat": 36.128821,
+  "minLon": -88.353717,
+  "maxLon": -88.192557,
+  "is_po_box": false
+ },
+ {
+  "zip": "38318",
+  "city": "Buena Vista",
+  "minLat": 35.893774,
+  "maxLat": 36.03027,
+  "minLon": -88.316582,
+  "maxLon": -88.214235,
+  "is_po_box": false
+ },
+ {
+  "zip": "38320",
+  "city": "Camden",
+  "minLat": 35.922194,
+  "maxLat": 36.1947,
+  "minLon": -88.215023,
+  "maxLon": -87.990777,
+  "is_po_box": false
+ },
+ {
+  "zip": "38321",
+  "city": "Cedar Grove",
+  "minLat": 35.735011,
+  "maxLat": 35.937145,
+  "minLon": -88.631387,
+  "maxLon": -88.406508,
+  "is_po_box": false
+ },
+ {
+  "zip": "38326",
+  "city": "Counce",
+  "minLat": 34.995436,
+  "maxLat": 35.168405,
+  "minLon": -88.377715,
+  "maxLon": -88.192831,
+  "is_po_box": false
+ },
+ {
+  "zip": "38327",
+  "city": "Crump",
+  "minLat": 35.15971,
+  "maxLat": 35.246092,
+  "minLon": -88.32652,
+  "maxLon": -88.257616,
+  "is_po_box": false
+ },
+ {
+  "zip": "38328",
+  "city": "Darden",
+  "minLat": 35.615672,
+  "maxLat": 35.738598,
+  "minLon": -88.258759,
+  "maxLon": -88.183831,
+  "is_po_box": false
+ },
+ {
+  "zip": "38329",
+  "city": "Decaturville",
+  "minLat": 35.444676,
+  "maxLat": 35.618329,
+  "minLon": -88.243071,
+  "maxLon": -87.974353,
+  "is_po_box": false
+ },
+ {
+  "zip": "38330",
+  "city": "Dyer",
+  "minLat": 36.002412,
+  "maxLat": 36.142596,
+  "minLon": -89.147632,
+  "maxLon": -88.915248,
+  "is_po_box": false
+ },
+ {
+  "zip": "38332",
+  "city": "Enville",
+  "minLat": 35.351008,
+  "maxLat": 35.48908,
+  "minLon": -88.515338,
+  "maxLon": -88.351765,
+  "is_po_box": false
+ },
+ {
+  "zip": "38333",
+  "city": "Eva",
+  "minLat": 36.04342,
+  "maxLat": 36.192503,
+  "minLon": -88.027381,
+  "maxLon": -87.915654,
+  "is_po_box": false
+ },
+ {
+  "zip": "38334",
+  "city": "Finger",
+  "minLat": 35.296442,
+  "maxLat": 35.417288,
+  "minLon": -88.696101,
+  "maxLon": -88.449048,
+  "is_po_box": false
+ },
+ {
+  "zip": "38337",
+  "city": "Gadsden",
+  "minLat": 35.737651,
+  "maxLat": 35.832165,
+  "minLon": -89.082254,
+  "maxLon": -88.935763,
+  "is_po_box": false
+ },
+ {
+  "zip": "38339",
+  "city": "Guys",
+  "minLat": 34.995827,
+  "maxLat": 35.114979,
+  "minLon": -88.564025,
+  "maxLon": -88.466168,
+  "is_po_box": false
+ },
+ {
+  "zip": "38340",
+  "city": "Henderson",
+  "minLat": 35.258651,
+  "maxLat": 35.552096,
+  "minLon": -88.880379,
+  "maxLon": -88.474339,
+  "is_po_box": false
+ },
+ {
+  "zip": "38341",
+  "city": "Holladay",
+  "minLat": 35.756226,
+  "maxLat": 35.983143,
+  "minLon": -88.225048,
+  "maxLon": -87.925835,
+  "is_po_box": false
+ },
+ {
+  "zip": "38342",
+  "city": "Hollow Rock",
+  "minLat": 36.022998,
+  "maxLat": 36.148417,
+  "minLon": -88.374565,
+  "maxLon": -88.211698,
+  "is_po_box": false
+ },
+ {
+  "zip": "38343",
+  "city": "Humboldt",
+  "minLat": 35.703432,
+  "maxLat": 35.935063,
+  "minLon": -89.095417,
+  "maxLon": -88.794767,
+  "is_po_box": false
+ },
+ {
+  "zip": "38344",
+  "city": "Huntingdon",
+  "minLat": 35.862189,
+  "maxLat": 36.125407,
+  "minLon": -88.599067,
+  "maxLon": -88.295706,
+  "is_po_box": false
+ },
+ {
+  "zip": "38345",
+  "city": "Huron",
+  "minLat": 35.490306,
+  "maxLat": 35.693554,
+  "minLon": -88.602352,
+  "maxLon": -88.422582,
+  "is_po_box": false
+ },
+ {
+  "zip": "38347",
+  "city": "Jacks Creek",
+  "minLat": 35.453876,
+  "maxLat": 35.498096,
+  "minLon": -88.523244,
+  "maxLon": -88.473841,
+  "is_po_box": false
+ },
+ {
+  "zip": "38348",
+  "city": "Lavinia",
+  "minLat": 35.790556,
+  "maxLat": 35.942171,
+  "minLon": -88.706811,
+  "maxLon": -88.569137,
+  "is_po_box": false
+ },
+ {
+  "zip": "38351",
+  "city": "Lexington",
+  "minLat": 35.515296,
+  "maxLat": 35.789354,
+  "minLon": -88.623811,
+  "maxLon": -88.230685,
+  "is_po_box": false
+ },
+ {
+  "zip": "38352",
+  "city": "Luray",
+  "minLat": 35.480835,
+  "maxLat": 35.592416,
+  "minLon": -88.579905,
+  "maxLon": -88.474868,
+  "is_po_box": false
+ },
+ {
+  "zip": "38355",
+  "city": "Medina",
+  "minLat": 35.73552,
+  "maxLat": 35.873614,
+  "minLon": -88.832211,
+  "maxLon": -88.664742,
+  "is_po_box": false
+ },
+ {
+  "zip": "38356",
+  "city": "Medon",
+  "minLat": 35.340286,
+  "maxLat": 35.534688,
+  "minLon": -89.01257,
+  "maxLon": -88.809473,
+  "is_po_box": false
+ },
+ {
+  "zip": "38357",
+  "city": "Michie",
+  "minLat": 34.995441,
+  "maxLat": 35.140608,
+  "minLon": -88.509499,
+  "maxLon": -88.307363,
+  "is_po_box": false
+ },
+ {
+  "zip": "38358",
+  "city": "Milan",
+  "minLat": 35.791075,
+  "maxLat": 36.03411,
+  "minLon": -88.875305,
+  "maxLon": -88.696545,
+  "is_po_box": false
+ },
+ {
+  "zip": "38359",
+  "city": "Milledgeville",
+  "minLat": 35.346372,
+  "maxLat": 35.395172,
+  "minLon": -88.386841,
+  "maxLon": -88.318289,
+  "is_po_box": false
+ },
+ {
+  "zip": "38361",
+  "city": "Morris Chapel",
+  "minLat": 35.262599,
+  "maxLat": 35.362465,
+  "minLon": -88.38873,
+  "maxLon": -88.181262,
+  "is_po_box": false
+ },
+ {
+  "zip": "38362",
+  "city": "Oakfield",
+  "minLat": 35.701031,
+  "maxLat": 35.75268,
+  "minLon": -88.83583,
+  "maxLon": -88.735085,
+  "is_po_box": false
+ },
+ {
+  "zip": "38363",
+  "city": "Parsons",
+  "minLat": 35.597729,
+  "maxLat": 35.783307,
+  "minLon": -88.208941,
+  "maxLon": -88.016641,
+  "is_po_box": false
+ },
+ {
+  "zip": "38365",
+  "city": "Pickwick Dam",
+  "minLat": 35.048034,
+  "maxLat": 35.066756,
+  "minLon": -88.24864,
+  "maxLon": -88.226598,
+  "is_po_box": false
+ },
+ {
+  "zip": "38366",
+  "city": "Pinson",
+  "minLat": 35.410057,
+  "maxLat": 35.532668,
+  "minLon": -88.832682,
+  "maxLon": -88.636744,
+  "is_po_box": false
+ },
+ {
+  "zip": "38367",
+  "city": "Ramer",
+  "minLat": 34.995221,
+  "maxLat": 35.135425,
+  "minLon": -88.737934,
+  "maxLon": -88.518561,
+  "is_po_box": false
+ },
+ {
+  "zip": "38368",
+  "city": "Reagan",
+  "minLat": 35.432875,
+  "maxLat": 35.599165,
+  "minLon": -88.486652,
+  "maxLon": -88.27741,
+  "is_po_box": false
+ },
+ {
+  "zip": "38369",
+  "city": "Rutherford",
+  "minLat": 36.089059,
+  "maxLat": 36.187109,
+  "minLon": -89.060551,
+  "maxLon": -88.847823,
+  "is_po_box": false
+ },
+ {
+  "zip": "38370",
+  "city": "Saltillo",
+  "minLat": 35.340562,
+  "maxLat": 35.423263,
+  "minLon": -88.292793,
+  "maxLon": -88.196462,
+  "is_po_box": false
+ },
+ {
+  "zip": "38371",
+  "city": "Sardis",
+  "minLat": 35.339411,
+  "maxLat": 35.518362,
+  "minLon": -88.362021,
+  "maxLon": -88.241677,
+  "is_po_box": false
+ },
+ {
+  "zip": "38372",
+  "city": "Savannah",
+  "minLat": 35.005927,
+  "maxLat": 35.41764,
+  "minLon": -88.318307,
+  "maxLon": -87.983573,
+  "is_po_box": false
+ },
+ {
+  "zip": "38374",
+  "city": "Scotts Hill",
+  "minLat": 35.387174,
+  "maxLat": 35.624046,
+  "minLon": -88.291294,
+  "maxLon": -88.170514,
+  "is_po_box": false
+ },
+ {
+  "zip": "38375",
+  "city": "Selmer",
+  "minLat": 35.073628,
+  "maxLat": 35.245451,
+  "minLon": -88.784237,
+  "maxLon": -88.421486,
+  "is_po_box": false
+ },
+ {
+  "zip": "38376",
+  "city": "Shiloh",
+  "minLat": 35.079496,
+  "maxLat": 35.129152,
+  "minLon": -88.386595,
+  "maxLon": -88.354333,
+  "is_po_box": false
+ },
+ {
+  "zip": "38379",
+  "city": "Stantonville",
+  "minLat": 35.119267,
+  "maxLat": 35.201672,
+  "minLon": -88.516151,
+  "maxLon": -88.371918,
+  "is_po_box": false
+ },
+ {
+  "zip": "38380",
+  "city": "Sugar Tree",
+  "minLat": 35.723783,
+  "maxLat": 35.868266,
+  "minLon": -88.092112,
+  "maxLon": -87.939873,
+  "is_po_box": false
+ },
+ {
+  "zip": "38381",
+  "city": "Toone",
+  "minLat": 35.276353,
+  "maxLat": 35.431396,
+  "minLon": -89.08819,
+  "maxLon": -88.857994,
+  "is_po_box": false
+ },
+ {
+  "zip": "38382",
+  "city": "Trenton",
+  "minLat": 35.851514,
+  "maxLat": 36.083065,
+  "minLon": -89.206297,
+  "maxLon": -88.789146,
+  "is_po_box": false
+ },
+ {
+  "zip": "38387",
+  "city": "Westport",
+  "minLat": 35.817759,
+  "maxLat": 35.927111,
+  "minLon": -88.367132,
+  "maxLon": -88.206956,
+  "is_po_box": false
+ },
+ {
+  "zip": "38388",
+  "city": "Wildersville",
+  "minLat": 35.705653,
+  "maxLat": 35.823807,
+  "minLon": -88.503381,
+  "maxLon": -88.179177,
+  "is_po_box": false
+ },
+ {
+  "zip": "38390",
+  "city": "Yuma",
+  "minLat": 35.800003,
+  "maxLat": 35.879834,
+  "minLon": -88.449928,
+  "maxLon": -88.28227,
+  "is_po_box": false
+ },
+ {
+  "zip": "38391",
+  "city": "Denmark",
+  "minLat": 35.467917,
+  "maxLat": 35.628971,
+  "minLon": -89.074766,
+  "maxLon": -88.902479,
+  "is_po_box": false
+ },
+ {
+  "zip": "38392",
+  "city": "Mercer",
+  "minLat": 35.403592,
+  "maxLat": 35.530626,
+  "minLon": -89.078876,
+  "maxLon": -88.971326,
+  "is_po_box": false
+ },
+ {
+  "zip": "38401",
+  "city": "Columbia",
+  "minLat": 35.475758,
+  "maxLat": 35.842853,
+  "minLon": -87.22823,
+  "maxLon": -86.76621,
+  "is_po_box": false
+ },
+ {
+  "zip": "38425",
+  "city": "Clifton",
+  "minLat": 35.316578,
+  "maxLat": 35.50127,
+  "minLon": -88.103492,
+  "maxLon": -87.798768,
+  "is_po_box": false
+ },
+ {
+  "zip": "38449",
+  "city": "Ardmore",
+  "minLat": 34.991842,
+  "maxLat": 35.130165,
+  "minLon": -86.918065,
+  "maxLon": -86.724967,
+  "is_po_box": false
+ },
+ {
+  "zip": "38450",
+  "city": "Collinwood",
+  "minLat": 35.107764,
+  "maxLat": 35.266812,
+  "minLon": -87.962001,
+  "maxLon": -87.603762,
+  "is_po_box": false
+ },
+ {
+  "zip": "38451",
+  "city": "Culleoka",
+  "minLat": 35.380103,
+  "maxLat": 35.541244,
+  "minLon": -87.147207,
+  "maxLon": -86.881609,
+  "is_po_box": false
+ },
+ {
+  "zip": "38452",
+  "city": "Cypress Inn",
+  "minLat": 35.00444,
+  "maxLat": 35.148,
+  "minLon": -87.924784,
+  "maxLon": -87.681261,
+  "is_po_box": false
+ },
+ {
+  "zip": "38453",
+  "city": "Dellrose",
+  "minLat": 35.082231,
+  "maxLat": 35.166159,
+  "minLon": -86.867977,
+  "maxLon": -86.768212,
+  "is_po_box": false
+ },
+ {
+  "zip": "38454",
+  "city": "Duck River",
+  "minLat": 35.641354,
+  "maxLat": 35.806639,
+  "minLon": -87.434751,
+  "maxLon": -87.250341,
+  "is_po_box": false
+ },
+ {
+  "zip": "38455",
+  "city": "Elkton",
+  "minLat": 35.038428,
+  "maxLat": 35.058888,
+  "minLon": -86.90472,
+  "maxLon": -86.87937,
+  "is_po_box": false
+ },
+ {
+  "zip": "38456",
+  "city": "Ethridge",
+  "minLat": 35.264299,
+  "maxLat": 35.397392,
+  "minLon": -87.404003,
+  "maxLon": -87.140836,
+  "is_po_box": false
+ },
+ {
+  "zip": "38457",
+  "city": "Five Points",
+  "minLat": 34.999377,
+  "maxLat": 35.08084,
+  "minLon": -87.357628,
+  "maxLon": -87.223451,
+  "is_po_box": false
+ },
+ {
+  "zip": "38459",
+  "city": "Frankewing",
+  "minLat": 35.14495,
+  "maxLat": 35.240352,
+  "minLon": -86.858072,
+  "maxLon": -86.748115,
+  "is_po_box": false
+ },
+ {
+  "zip": "38460",
+  "city": "Goodspring",
+  "minLat": 34.99659,
+  "maxLat": 35.149427,
+  "minLon": -87.223206,
+  "maxLon": -87.083966,
+  "is_po_box": false
+ },
+ {
+  "zip": "38461",
+  "city": "Hampshire",
+  "minLat": 35.504253,
+  "maxLat": 35.68948,
+  "minLon": -87.42491,
+  "maxLon": -87.256875,
+  "is_po_box": false
+ },
+ {
+  "zip": "38462",
+  "city": "Hohenwald",
+  "minLat": 35.398188,
+  "maxLat": 35.653304,
+  "minLon": -87.717559,
+  "maxLon": -87.385963,
+  "is_po_box": false
+ },
+ {
+  "zip": "38463",
+  "city": "Iron City",
+  "minLat": 35.003052,
+  "maxLat": 35.16445,
+  "minLon": -87.780481,
+  "maxLon": -87.504216,
+  "is_po_box": false
+ },
+ {
+  "zip": "38464",
+  "city": "Lawrenceburg",
+  "minLat": 35.12349,
+  "maxLat": 35.439859,
+  "minLon": -87.670828,
+  "maxLon": -87.154722,
+  "is_po_box": false
+ },
+ {
+  "zip": "38468",
+  "city": "Leoma",
+  "minLat": 35.039106,
+  "maxLat": 35.221133,
+  "minLon": -87.425442,
+  "maxLon": -87.166405,
+  "is_po_box": false
+ },
+ {
+  "zip": "38469",
+  "city": "Loretto",
+  "minLat": 35.001736,
+  "maxLat": 35.148764,
+  "minLon": -87.535989,
+  "maxLon": -87.330763,
+  "is_po_box": false
+ },
+ {
+  "zip": "38471",
+  "city": "Lutts",
+  "minLat": 35.005458,
+  "maxLat": 35.173708,
+  "minLon": -87.984972,
+  "maxLon": -87.823144,
+  "is_po_box": false
+ },
+ {
+  "zip": "38472",
+  "city": "Lynnville",
+  "minLat": 35.305098,
+  "maxLat": 35.456201,
+  "minLon": -87.17905,
+  "maxLon": -86.892676,
+  "is_po_box": false
+ },
+ {
+  "zip": "38473",
+  "city": "Minor Hill",
+  "minLat": 34.996673,
+  "maxLat": 35.075222,
+  "minLon": -87.224877,
+  "maxLon": -87.094472,
+  "is_po_box": false
+ },
+ {
+  "zip": "38474",
+  "city": "Mount Pleasant",
+  "minLat": 35.366835,
+  "maxLat": 35.659508,
+  "minLon": -87.331451,
+  "maxLon": -87.122189,
+  "is_po_box": false
+ },
+ {
+  "zip": "38475",
+  "city": "Olivehill",
+  "minLat": 35.15551,
+  "maxLat": 35.33867,
+  "minLon": -88.124968,
+  "maxLon": -87.934451,
+  "is_po_box": false
+ },
+ {
+  "zip": "38476",
+  "city": "Primm Springs",
+  "minLat": 35.774322,
+  "maxLat": 35.91634,
+  "minLon": -87.305813,
+  "maxLon": -87.133941,
+  "is_po_box": false
+ },
+ {
+  "zip": "38477",
+  "city": "Prospect",
+  "minLat": 34.992729,
+  "maxLat": 35.135967,
+  "minLon": -87.151278,
+  "maxLon": -86.878142,
+  "is_po_box": false
+ },
+ {
+  "zip": "38478",
+  "city": "Pulaski",
+  "minLat": 35.08136,
+  "maxLat": 35.350704,
+  "minLon": -87.191344,
+  "maxLon": -86.828301,
+  "is_po_box": false
+ },
+ {
+  "zip": "38481",
+  "city": "Saint Joseph",
+  "minLat": 35.002726,
+  "maxLat": 35.066762,
+  "minLon": -87.537048,
+  "maxLon": -87.44946,
+  "is_po_box": false
+ },
+ {
+  "zip": "38482",
+  "city": "Santa Fe",
+  "minLat": 35.687028,
+  "maxLat": 35.843158,
+  "minLon": -87.201605,
+  "maxLon": -87.083277,
+  "is_po_box": false
+ },
+ {
+  "zip": "38483",
+  "city": "Summertown",
+  "minLat": 35.357529,
+  "maxLat": 35.535222,
+  "minLon": -87.475617,
+  "maxLon": -87.1694,
+  "is_po_box": false
+ },
+ {
+  "zip": "38485",
+  "city": "Waynesboro",
+  "minLat": 35.202272,
+  "maxLat": 35.491782,
+  "minLon": -88.017603,
+  "maxLon": -87.597424,
+  "is_po_box": false
+ },
+ {
+  "zip": "38486",
+  "city": "Westpoint",
+  "minLat": 35.064552,
+  "maxLat": 35.269142,
+  "minLon": -87.639962,
+  "maxLon": -87.442144,
+  "is_po_box": false
+ },
+ {
+  "zip": "38487",
+  "city": "Williamsport",
+  "minLat": 35.63917,
+  "maxLat": 35.795942,
+  "minLon": -87.303271,
+  "maxLon": -87.16179,
+  "is_po_box": false
+ },
+ {
+  "zip": "38488",
+  "city": "Taft",
+  "minLat": 34.991063,
+  "maxLat": 35.12416,
+  "minLon": -86.782432,
+  "maxLon": -86.578218,
+  "is_po_box": false
+ },
+ {
+  "zip": "38501",
+  "city": "Cookeville",
+  "minLat": 36.134471,
+  "maxLat": 36.353793,
+  "minLon": -85.62686,
+  "maxLon": -85.4608,
+  "is_po_box": false
+ },
+ {
+  "zip": "38504",
+  "city": "Allardt",
+  "minLat": 36.324179,
+  "maxLat": 36.458497,
+  "minLon": -84.884864,
+  "maxLon": -84.619591,
+  "is_po_box": false
+ },
+ {
+  "zip": "38505",
+  "city": "Cookeville",
+  "minLat": 36.1716,
+  "maxLat": 36.179153,
+  "minLon": -85.508148,
+  "maxLon": -85.501449,
+  "is_po_box": false
+ },
+ {
+  "zip": "38506",
+  "city": "Cookeville",
+  "minLat": 36.031361,
+  "maxLat": 36.35806,
+  "minLon": -85.620431,
+  "maxLon": -85.302666,
+  "is_po_box": false
+ },
+ {
+  "zip": "38541",
+  "city": "Allons",
+  "minLat": 36.433376,
+  "maxLat": 36.626816,
+  "minLon": -85.425458,
+  "maxLon": -85.267057,
+  "is_po_box": false
+ },
+ {
+  "zip": "38542",
+  "city": "Allred",
+  "minLat": 36.301253,
+  "maxLat": 36.336107,
+  "minLon": -85.249055,
+  "maxLon": -85.179825,
+  "is_po_box": false
+ },
+ {
+  "zip": "38543",
+  "city": "Alpine",
+  "minLat": 36.283715,
+  "maxLat": 36.452658,
+  "minLon": -85.235935,
+  "maxLon": -85.101438,
+  "is_po_box": false
+ },
+ {
+  "zip": "38544",
+  "city": "Baxter",
+  "minLat": 35.999428,
+  "maxLat": 36.235813,
+  "minLon": -85.781501,
+  "maxLon": -85.563434,
+  "is_po_box": false
+ },
+ {
+  "zip": "38545",
+  "city": "Bloomington Springs",
+  "minLat": 36.187099,
+  "maxLat": 36.275686,
+  "minLon": -85.7575,
+  "maxLon": -85.599998,
+  "is_po_box": false
+ },
+ {
+  "zip": "38547",
+  "city": "Brush Creek",
+  "minLat": 36.086024,
+  "maxLat": 36.237907,
+  "minLon": -86.074568,
+  "maxLon": -85.938994,
+  "is_po_box": false
+ },
+ {
+  "zip": "38548",
+  "city": "Buffalo Valley",
+  "minLat": 36.107644,
+  "maxLat": 36.231663,
+  "minLon": -85.86394,
+  "maxLon": -85.740057,
+  "is_po_box": false
+ },
+ {
+  "zip": "38549",
+  "city": "Byrdstown",
+  "minLat": 36.44304,
+  "maxLat": 36.626816,
+  "minLon": -85.281339,
+  "maxLon": -85.044052,
+  "is_po_box": false
+ },
+ {
+  "zip": "38551",
+  "city": "Celina",
+  "minLat": 36.434338,
+  "maxLat": 36.626827,
+  "minLon": -85.612723,
+  "maxLon": -85.276281,
+  "is_po_box": false
+ },
+ {
+  "zip": "38552",
+  "city": "Chestnut Mound",
+  "minLat": 36.187283,
+  "maxLat": 36.254776,
+  "minLon": -85.846591,
+  "maxLon": -85.779723,
+  "is_po_box": false
+ },
+ {
+  "zip": "38553",
+  "city": "Clarkrange",
+  "minLat": 36.141462,
+  "maxLat": 36.265696,
+  "minLon": -85.119583,
+  "maxLon": -84.914779,
+  "is_po_box": false
+ },
+ {
+  "zip": "38554",
+  "city": "Crawford",
+  "minLat": 36.184057,
+  "maxLat": 36.314778,
+  "minLon": -85.221291,
+  "maxLon": -85.100385,
+  "is_po_box": false
+ },
+ {
+  "zip": "38555",
+  "city": "Crossville",
+  "minLat": 35.746725,
+  "maxLat": 36.014776,
+  "minLon": -85.116729,
+  "maxLon": -84.853809,
+  "is_po_box": false
+ },
+ {
+  "zip": "38556",
+  "city": "Jamestown",
+  "minLat": 36.221318,
+  "maxLat": 36.569107,
+  "minLon": -85.121757,
+  "maxLon": -84.692648,
+  "is_po_box": false
+ },
+ {
+  "zip": "38558",
+  "city": "Crossville",
+  "minLat": 35.950534,
+  "maxLat": 36.047449,
+  "minLon": -84.924782,
+  "maxLon": -84.809263,
+  "is_po_box": false
+ },
+ {
+  "zip": "38559",
+  "city": "Doyle",
+  "minLat": 35.768336,
+  "maxLat": 35.868902,
+  "minLon": -85.577598,
+  "maxLon": -85.458004,
+  "is_po_box": false
+ },
+ {
+  "zip": "38560",
+  "city": "Elmwood",
+  "minLat": 36.139032,
+  "maxLat": 36.308048,
+  "minLon": -85.948629,
+  "maxLon": -85.800221,
+  "is_po_box": false
+ },
+ {
+  "zip": "38562",
+  "city": "Gainesboro",
+  "minLat": 36.24558,
+  "maxLat": 36.481963,
+  "minLon": -85.846483,
+  "maxLon": -85.506259,
+  "is_po_box": false
+ },
+ {
+  "zip": "38563",
+  "city": "Gordonsville",
+  "minLat": 36.156562,
+  "maxLat": 36.257302,
+  "minLon": -86.100456,
+  "maxLon": -85.90394,
+  "is_po_box": false
+ },
+ {
+  "zip": "38564",
+  "city": "Granville",
+  "minLat": 36.22573,
+  "maxLat": 36.322907,
+  "minLon": -85.813011,
+  "maxLon": -85.65798,
+  "is_po_box": false
+ },
+ {
+  "zip": "38565",
+  "city": "Grimsley",
+  "minLat": 36.232743,
+  "maxLat": 36.295274,
+  "minLon": -85.047066,
+  "maxLon": -84.964782,
+  "is_po_box": false
+ },
+ {
+  "zip": "38567",
+  "city": "Hickman",
+  "minLat": 36.089112,
+  "maxLat": 36.178835,
+  "minLon": -85.97298,
+  "maxLon": -85.862036,
+  "is_po_box": false
+ },
+ {
+  "zip": "38568",
+  "city": "Hilham",
+  "minLat": 36.336915,
+  "maxLat": 36.558961,
+  "minLon": -85.568331,
+  "maxLon": -85.374258,
+  "is_po_box": false
+ },
+ {
+  "zip": "38569",
+  "city": "Lancaster",
+  "minLat": 36.033295,
+  "maxLat": 36.150099,
+  "minLon": -85.901054,
+  "maxLon": -85.801616,
+  "is_po_box": false
+ },
+ {
+  "zip": "38570",
+  "city": "Livingston",
+  "minLat": 36.274916,
+  "maxLat": 36.476577,
+  "minLon": -85.437785,
+  "maxLon": -85.205508,
+  "is_po_box": false
+ },
+ {
+  "zip": "38571",
+  "city": "Crossville",
+  "minLat": 35.925656,
+  "maxLat": 36.170586,
+  "minLon": -85.245682,
+  "maxLon": -84.788611,
+  "is_po_box": false
+ },
+ {
+  "zip": "38572",
+  "city": "Crossville",
+  "minLat": 35.702929,
+  "maxLat": 35.975782,
+  "minLon": -85.273288,
+  "maxLon": -84.993141,
+  "is_po_box": false
+ },
+ {
+  "zip": "38573",
+  "city": "Monroe",
+  "minLat": 36.395517,
+  "maxLat": 36.593372,
+  "minLon": -85.307258,
+  "maxLon": -85.120087,
+  "is_po_box": false
+ },
+ {
+  "zip": "38574",
+  "city": "Monterey",
+  "minLat": 36.018186,
+  "maxLat": 36.264765,
+  "minLon": -85.382612,
+  "maxLon": -85.039153,
+  "is_po_box": false
+ },
+ {
+  "zip": "38575",
+  "city": "Moss",
+  "minLat": 36.479386,
+  "maxLat": 36.618905,
+  "minLon": -85.722544,
+  "maxLon": -85.565356,
+  "is_po_box": false
+ },
+ {
+  "zip": "38577",
+  "city": "Pall Mall",
+  "minLat": 36.490341,
+  "maxLat": 36.621248,
+  "minLon": -85.118739,
+  "maxLon": -84.771471,
+  "is_po_box": false
+ },
+ {
+  "zip": "38578",
+  "city": "Pleasant Hill",
+  "minLat": 35.975464,
+  "maxLat": 35.987549,
+  "minLon": -85.207811,
+  "maxLon": -85.190375,
+  "is_po_box": false
+ },
+ {
+  "zip": "38579",
+  "city": "Quebeck",
+  "minLat": 35.791531,
+  "maxLat": 35.876221,
+  "minLon": -85.601947,
+  "maxLon": -85.487486,
+  "is_po_box": false
+ },
+ {
+  "zip": "38580",
+  "city": "Rickman",
+  "minLat": 36.233965,
+  "maxLat": 36.346061,
+  "minLon": -85.405794,
+  "maxLon": -85.194074,
+  "is_po_box": false
+ },
+ {
+  "zip": "38581",
+  "city": "Rock Island",
+  "minLat": 35.586295,
+  "maxLat": 35.853768,
+  "minLon": -85.755485,
+  "maxLon": -85.495565,
+  "is_po_box": false
+ },
+ {
+  "zip": "38582",
+  "city": "Silver Point",
+  "minLat": 36.025129,
+  "maxLat": 36.155366,
+  "minLon": -85.852669,
+  "maxLon": -85.659111,
+  "is_po_box": false
+ },
+ {
+  "zip": "38583",
+  "city": "Sparta",
+  "minLat": 35.775005,
+  "maxLat": 36.085141,
+  "minLon": -85.726551,
+  "maxLon": -85.197841,
+  "is_po_box": false
+ },
+ {
+  "zip": "38585",
+  "city": "Spencer",
+  "minLat": 35.54685,
+  "maxLat": 35.82217,
+  "minLon": -85.56519,
+  "maxLon": -85.253426,
+  "is_po_box": false
+ },
+ {
+  "zip": "38587",
+  "city": "Walling",
+  "minLat": 35.793843,
+  "maxLat": 35.940089,
+  "minLon": -85.682886,
+  "maxLon": -85.564651,
+  "is_po_box": false
+ },
+ {
+  "zip": "38588",
+  "city": "Whitleyville",
+  "minLat": 36.352185,
+  "maxLat": 36.559729,
+  "minLon": -85.828866,
+  "maxLon": -85.586464,
+  "is_po_box": false
+ },
+ {
+  "zip": "38589",
+  "city": "Wilder",
+  "minLat": 36.216709,
+  "maxLat": 36.33999,
+  "minLon": -85.141895,
+  "maxLon": -85.010032,
+  "is_po_box": false
+ },
+ {
+  "zip": "42223",
+  "city": "",
+  "minLat": 36.588567,
+  "maxLat": 36.640846,
+  "minLon": -87.498176,
+  "maxLon": -87.423163,
+  "is_po_box": false
+ },
+ {
+  "zip": "42602",
+  "city": "",
+  "minLat": 36.617691,
+  "maxLat": 36.625599,
+  "minLon": -85.209382,
+  "maxLon": -85.189692,
+  "is_po_box": false
+ },
+ {
+  "zip": "72338",
+  "city": "",
+  "minLat": 35.374633,
+  "maxLat": 35.479012,
+  "minLon": -90.179265,
+  "maxLon": -90.054322,
+  "is_po_box": false
+ }
+]

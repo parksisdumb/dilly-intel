@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import Link from "next/link"
 
 type Stats = {
   properties: number
@@ -116,11 +117,19 @@ export default function OpsPage() {
           <h1 className="text-lg font-bold text-white">dilly intel ops</h1>
           <span className="text-muted text-xs">agent control & database monitor</span>
         </div>
-        {stats?.lastUpdated && (
-          <span className="text-muted text-xs">
-            last record: {fmtTime(stats.lastUpdated)}
-          </span>
-        )}
+        <div className="flex items-baseline gap-4">
+          <Link
+            href="/intelligence"
+            className="text-xs text-accent hover:text-accent-hover uppercase tracking-widest"
+          >
+            property intelligence →
+          </Link>
+          {stats?.lastUpdated && (
+            <span className="text-muted text-xs">
+              last record: {fmtTime(stats.lastUpdated)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* SECTION 1 — Database Stats */}

@@ -13,6 +13,10 @@ export type Filters = {
   portfolioMatch: "all" | "matched"
   minYear: string
   maxYear: string
+  // Estimated-value range. Strings (not numbers) so the input field can
+  // be empty; the API parses to numbers.
+  minValue: string
+  maxValue: string
   // Radius search — built but UI is hidden until coordinates are
   // backfilled across all sources. Wire-only for now.
   nearAddress: string
@@ -21,14 +25,23 @@ export type Filters = {
 
 const RADIUS_OPTIONS = [10, 25, 50, 100] as const
 
+// Order matches the rollup categories declared in
+// src/lib/intel/property-types.ts. When the user toggles one of
+// these the API route translates the label into the same ILIKE
+// pattern set the market dashboard uses, so the two views stay in
+// sync (i.e. checking "Office" returns the same buildings the
+// market chart counts under "Office").
 const PROPERTY_TYPES = [
   "Office",
   "Retail",
   "Industrial",
   "Multifamily",
+  "Hospitality",
   "Healthcare",
+  "Restaurant/Food",
+  "Automotive",
   "Self Storage",
-  "Mixed Use",
+  "Religious/Nonprofit",
   "Other",
 ]
 
@@ -48,10 +61,15 @@ type Props = {
   onApply: (f: Filters) => void
   onSearchChange: (v: string) => void
   onClear: () => void
+  // When true, Apply Filters is disabled until a state is selected.
+  // The /intelligence page sets this to avoid firing unfiltered fetches
+  // that hit the unbounded 1.1M-row code path on the API.
+  stateRequired?: boolean
 }
 
-export function FilterSidebar({ initial, onApply, onSearchChange, onClear }: Props) {
+export function FilterSidebar({ initial, onApply, onSearchChange, onClear, stateRequired }: Props) {
   const [filters, setFilters] = useState<Filters>(initial)
+  const applyDisabled = !!(stateRequired && !filters.state)
 
   // Sync external changes (e.g. from URL on first load).
   const initialTypesKey = initial.propertyTypes.join(",")
@@ -69,6 +87,8 @@ export function FilterSidebar({ initial, onApply, onSearchChange, onClear }: Pro
     initial.portfolioMatch,
     initial.minYear,
     initial.maxYear,
+    initial.minValue,
+    initial.maxValue,
     initial.nearAddress,
     initial.radiusMiles,
   ])
@@ -98,12 +118,39 @@ export function FilterSidebar({ initial, onApply, onSearchChange, onClear }: Pro
       portfolioMatch: "all",
       minYear: "",
       maxYear: "",
+      minValue: "",
+      maxValue: "",
       nearAddress: "",
       radiusMiles: 25,
     }
     setFilters(cleared)
     onClear()
   }
+
+  // Quick-button helpers for the contractor-facing presets.
+  // Building size: contractors target specific square-foot bands when
+  // bidding. Year-built: roof age proxies — older = more replacement
+  // candidates.
+  const SIZE_PRESETS: { label: string; min: number; max: number }[] = [
+    { label: "10k–25k", min: 10_000, max: 25_000 },
+    { label: "25k–50k", min: 25_000, max: 50_000 },
+    { label: "50k–100k", min: 50_000, max: 100_000 },
+    { label: "100k+",  min: 100_000, max: SQFT_MAX },
+  ]
+  const YEAR_PRESETS: { label: string; max: string }[] = [
+    { label: "Before 1990", max: "1990" },
+    { label: "Before 2000", max: "2000" },
+    { label: "Before 2010", max: "2010" },
+  ]
+  function applySizePreset(p: { min: number; max: number }) {
+    setFilters((f) => ({ ...f, minSqft: p.min, maxSqft: p.max }))
+  }
+  function applyYearPreset(p: { max: string }) {
+    setFilters((f) => ({ ...f, minYear: "", maxYear: p.max }))
+  }
+  const yearActive = (max: string) => filters.maxYear === max && !filters.minYear
+  const sizeActive = (min: number, max: number) =>
+    filters.minSqft === min && filters.maxSqft === max
 
   function useMyLocation() {
     if (typeof navigator === "undefined" || !navigator.geolocation) return
@@ -121,43 +168,78 @@ export function FilterSidebar({ initial, onApply, onSearchChange, onClear }: Pro
 
   return (
     <aside className="w-[320px] flex-shrink-0 border-r border-[var(--intel-border)] bg-[var(--intel-bg)]">
-      <div className="sticky top-0 max-h-screen overflow-y-auto px-5 py-5">
-        <div className="mb-5">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--intel-text-muted)]">
-            property intelligence
+      <div className="sticky top-0 flex max-h-screen flex-col">
+        {/* Sticky top zone — header, location search, and the Apply/Clear
+           controls. Always visible without scrolling so users don't have to
+           hunt for the Apply button below the fold on shorter viewports. */}
+        <div className="flex-shrink-0 border-b border-[var(--intel-border)] bg-[var(--intel-bg)] px-5 pb-3 pt-5">
+          <div className="mb-4">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--intel-text-muted)]">
+              property intelligence
+            </div>
+            <div className="mt-0.5 text-[13px] font-medium text-[var(--intel-text)]">
+              filters
+            </div>
           </div>
-          <div className="text-[13px] font-medium text-[var(--intel-text)] mt-0.5">
-            filters
-          </div>
+
+          {/* Location search — debounced live (parent debounces). Accepts:
+             - "37138"            zip exact
+             - "37138-1234"       zip prefix
+             - "37138 Memphis"    zip + city
+             - "Shelby County"    county
+             - "Memphis"          city */}
+          <FilterGroup label="location" tightBottom>
+            <input
+              type="text"
+              placeholder="city, zip code, or county"
+              value={filters.search}
+              onChange={(e) => {
+                update("search", e.target.value)
+                onSearchChange(e.target.value)
+              }}
+              className="w-full rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-2 text-[13px] text-[var(--intel-text)] placeholder-[var(--intel-text-dim)] outline-none transition-colors focus:border-[var(--intel-accent-border)]"
+            />
+          </FilterGroup>
+
+          <button
+            onClick={() => onApply(filters)}
+            disabled={applyDisabled}
+            title={applyDisabled ? "Select a state to enable filters" : undefined}
+            className="mt-3 w-full rounded-md bg-[var(--intel-accent)] px-3 py-2.5 text-[12px] font-semibold uppercase tracking-widest text-[var(--intel-bg)] transition-colors hover:bg-[var(--intel-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--intel-bg-elev-2)] disabled:text-[var(--intel-text-dim)] disabled:hover:bg-[var(--intel-bg-elev-2)]"
+          >
+            apply filters
+          </button>
+          {applyDisabled && (
+            <div className="mt-1.5 text-center text-[10px] leading-snug text-[var(--intel-text-dim)]">
+              select a state to enable
+            </div>
+          )}
+          <button
+            onClick={clear}
+            className="mt-2 w-full text-center text-[11px] uppercase tracking-widest text-[var(--intel-text-muted)] transition-colors hover:text-[var(--intel-text)]"
+          >
+            clear all
+          </button>
         </div>
 
-        {/* Location search — debounced live (parent debounces). Accepts:
-           - "37138"            zip exact
-           - "37138-1234"       zip prefix
-           - "37138 Memphis"    zip + city
-           - "Shelby County"    county
-           - "Memphis"          city */}
-        <FilterGroup label="location">
-          <input
-            type="text"
-            placeholder="city, zip code, or county"
-            value={filters.search}
-            onChange={(e) => {
-              update("search", e.target.value)
-              onSearchChange(e.target.value)
-            }}
-            className="w-full rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-2 text-[13px] text-[var(--intel-text)] placeholder-[var(--intel-text-dim)] outline-none transition-colors focus:border-[var(--intel-accent-border)]"
-          />
-        </FilterGroup>
+        {/* Scrollable filter list — everything below the apply button. */}
+        <div className="flex-1 overflow-y-auto px-5 pb-5 pt-4">
 
-        {/* State */}
-        <FilterGroup label="state">
+        {/* State — required. Without it the API runs against the full
+           1.1M-row table without an index seek and times out. The page
+           passes stateRequired so the Apply button stays disabled until
+           the user picks one. */}
+        <FilterGroup label={stateRequired ? "state (required)" : "state"}>
           <select
             value={filters.state}
             onChange={(e) => update("state", e.target.value)}
-            className="w-full rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-2 text-[13px] text-[var(--intel-text)] outline-none focus:border-[var(--intel-accent-border)]"
+            className={`w-full rounded-md border bg-[var(--intel-bg-elev)] px-3 py-2 text-[13px] text-[var(--intel-text)] outline-none focus:border-[var(--intel-accent-border)] ${
+              stateRequired && !filters.state
+                ? "border-[var(--intel-accent-border)]"
+                : "border-[var(--intel-border)]"
+            }`}
           >
-            <option value="">All states</option>
+            <option value="">{stateRequired ? "Select state…" : "All states"}</option>
             {US_STATES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -225,7 +307,7 @@ export function FilterSidebar({ initial, onApply, onSearchChange, onClear }: Pro
           </div>
         </FilterGroup>
 
-        {/* Building size — dual range */}
+        {/* Building size — dual range + quick presets */}
         <FilterGroup label="building size">
           <div className="flex items-baseline justify-between text-[11px] mb-2">
             <span data-mono className="text-[var(--intel-text)]">
@@ -262,6 +344,17 @@ export function FilterSidebar({ initial, onApply, onSearchChange, onClear }: Pro
               className="w-full"
             />
           </div>
+          <div className="mt-2 grid grid-cols-2 gap-1">
+            {SIZE_PRESETS.map((p) => (
+              <Chip
+                key={p.label}
+                active={sizeActive(p.min, p.max)}
+                onClick={() => applySizePreset(p)}
+              >
+                {p.label}
+              </Chip>
+            ))}
+          </div>
         </FilterGroup>
 
         {/* Owner type */}
@@ -289,7 +382,7 @@ export function FilterSidebar({ initial, onApply, onSearchChange, onClear }: Pro
           />
         </FilterGroup>
 
-        {/* Year built */}
+        {/* Year built — inputs + roof-age presets */}
         <FilterGroup label="year built">
           <div className="flex gap-2">
             <input
@@ -307,22 +400,65 @@ export function FilterSidebar({ initial, onApply, onSearchChange, onClear }: Pro
               className="w-1/2 rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-1.5 text-[13px] text-[var(--intel-text)] placeholder-[var(--intel-text-dim)] outline-none focus:border-[var(--intel-accent-border)]"
             />
           </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {YEAR_PRESETS.map((p) => (
+              <Chip
+                key={p.label}
+                active={yearActive(p.max)}
+                onClick={() => applyYearPreset(p)}
+              >
+                {p.label}
+              </Chip>
+            ))}
+          </div>
         </FilterGroup>
 
-        <button
-          onClick={() => onApply(filters)}
-          className="mt-2 w-full rounded-md bg-[var(--intel-accent)] px-3 py-2.5 text-[12px] font-semibold uppercase tracking-widest text-[var(--intel-bg)] transition-colors hover:bg-[var(--intel-accent-hover)]"
-        >
-          apply filters
-        </button>
-        <button
-          onClick={clear}
-          className="mt-2 w-full text-center text-[11px] uppercase tracking-widest text-[var(--intel-text-muted)] transition-colors hover:text-[var(--intel-text)]"
-        >
-          clear all
-        </button>
+        {/* Estimated value — min/max inputs (USD) */}
+        <FilterGroup label="estimated value (usd)">
+          <div className="flex gap-2">
+            <input
+              type="number"
+              placeholder="Min"
+              value={filters.minValue}
+              onChange={(e) => update("minValue", e.target.value)}
+              className="w-1/2 rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-1.5 text-[13px] text-[var(--intel-text)] placeholder-[var(--intel-text-dim)] outline-none focus:border-[var(--intel-accent-border)]"
+            />
+            <input
+              type="number"
+              placeholder="Max"
+              value={filters.maxValue}
+              onChange={(e) => update("maxValue", e.target.value)}
+              className="w-1/2 rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-1.5 text-[13px] text-[var(--intel-text)] placeholder-[var(--intel-text-dim)] outline-none focus:border-[var(--intel-accent-border)]"
+            />
+          </div>
+        </FilterGroup>
+        </div>
       </div>
     </aside>
+  )
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded border px-2 py-1 text-[10px] uppercase tracking-widest transition-colors ${
+        active
+          ? "border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)] text-[var(--intel-accent)]"
+          : "border-[var(--intel-border)] bg-[var(--intel-bg-elev)] text-[var(--intel-text-muted)] hover:border-[var(--intel-border-strong)] hover:text-[var(--intel-text)]"
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -330,13 +466,18 @@ function FilterGroup({
   label,
   children,
   hidden,
+  tightBottom,
 }: {
   label: string
   children: React.ReactNode
   hidden?: boolean
+  tightBottom?: boolean
 }) {
   return (
-    <div className="mb-5" style={hidden ? { display: "none" } : undefined}>
+    <div
+      className={tightBottom ? "" : "mb-5"}
+      style={hidden ? { display: "none" } : undefined}
+    >
       <div className="mb-2 text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
         {label}
       </div>

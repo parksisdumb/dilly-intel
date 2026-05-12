@@ -22,9 +22,15 @@ from .property_codes import (
     classify_fl_dor_uc,
     classify_nc_paruse,
     classify_ar_parceltype,
+    classify_oh_luc,
+    classify_ga_lucode,
+    classify_mo_class,
     is_commercial_tx,
     is_commercial_fl,
     is_commercial_nc,
+    is_commercial_oh,
+    is_commercial_ga,
+    is_commercial_mo,
 )
 
 __all__ = [
@@ -37,7 +43,13 @@ __all__ = [
     "classify_fl_dor_uc",
     "classify_nc_paruse",
     "classify_ar_parceltype",
+    "classify_oh_luc",
+    "classify_ga_lucode",
+    "classify_mo_class",
     "is_commercial_tx",
     "is_commercial_fl",
     "is_commercial_nc",
+    "is_commercial_oh",
+    "is_commercial_ga",
+    "is_commercial_mo",
 ]

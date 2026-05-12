@@ -16,15 +16,28 @@ type Owner = {
   avg_sqft: number | null
 }
 
+type PortfolioOwner = {
+  mailing_address: string
+  mailing_city: string | null
+  mailing_state: string | null
+  mailing_zip: string | null
+  property_count: number
+  llc_names: string[]
+  total_sqft: number | null
+  total_value: number | null
+}
+
 type MarketResponse = {
   filters: { city: string | null; state: string | null; zip: string | null; hide_gov?: boolean }
   summary: {
     total: number
     by_type: { bucket: string; count: number }[]
+    by_type_rollup?: { bucket: string; count: number }[]
     ownership: { corporate: number; individual: number; unknown: number }
     ownership_raw?: { corporate: number; individual: number; unknown: number }
     corporate_pct: number
     corporate_pct_reliable?: boolean
+    corporate_pct_estimated?: boolean
     matched: { matched: number; unmatched: number }
   }
   concentration: {
@@ -35,6 +48,13 @@ type MarketResponse = {
   }
   top_owners_by_count: Owner[]
   top_owners_by_sqft: Owner[]
+  // portfolio_owners is now fetched from /api/intelligence/market/portfolios
+  // — see the separate request kicked off in MarketPageInner.
+  error?: string
+}
+
+type PortfoliosResponse = {
+  portfolio_owners: PortfolioOwner[]
   error?: string
 }
 
@@ -74,7 +94,15 @@ function MarketPageInner() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Portfolios are loaded from a separate endpoint — heaviest GROUP BY
+  // in the dashboard, kept off the critical path so the headline KPIs
+  // and owner tables render without waiting on it.
+  const [portfolios, setPortfolios] = useState<PortfolioOwner[]>([])
+  const [portfoliosLoading, setPortfoliosLoading] = useState(false)
+  const [portfoliosError, setPortfoliosError] = useState<string | null>(null)
+
   const reqIdRef = useRef(0)
+  const portfolioReqIdRef = useRef(0)
   const debounceRef = useRef<number | null>(null)
 
   const fetchData = useCallback(async (s: string, st: string, hg: boolean) => {
@@ -99,6 +127,32 @@ function MarketPageInner() {
     }
   }, [])
 
+  const fetchPortfolios = useCallback(
+    async (s: string, st: string, hg: boolean) => {
+      const myReqId = ++portfolioReqIdRef.current
+      setPortfoliosLoading(true)
+      setPortfoliosError(null)
+      setPortfolios([])
+      const sp = new URLSearchParams()
+      if (s) sp.set("search", s)
+      if (st) sp.set("state", st)
+      sp.set("hide_gov", hg ? "true" : "false")
+      try {
+        const res = await fetch(`/api/intelligence/market/portfolios?${sp.toString()}`)
+        const json = (await res.json()) as PortfoliosResponse
+        if (myReqId !== portfolioReqIdRef.current) return
+        if (json.error) setPortfoliosError(json.error)
+        setPortfolios(json.portfolio_owners ?? [])
+      } catch (e: unknown) {
+        if (myReqId !== portfolioReqIdRef.current) return
+        setPortfoliosError(e instanceof Error ? e.message : "Failed to load portfolios")
+      } finally {
+        if (myReqId === portfolioReqIdRef.current) setPortfoliosLoading(false)
+      }
+    },
+    []
+  )
+
   // Update URL params, debounced
   const syncUrl = useCallback(
     (s: string, st: string, hg: boolean) => {
@@ -118,13 +172,16 @@ function MarketPageInner() {
   useEffect(() => {
     if (debounceRef.current != null) window.clearTimeout(debounceRef.current)
     debounceRef.current = window.setTimeout(() => {
+      // Fire both in parallel — they're independent endpoints. The
+      // page renders progressively as each lands.
       fetchData(search, state, hideGov)
+      fetchPortfolios(search, state, hideGov)
       syncUrl(search, state, hideGov)
     }, 300)
     return () => {
       if (debounceRef.current != null) window.clearTimeout(debounceRef.current)
     }
-  }, [search, state, hideGov, fetchData, syncUrl])
+  }, [search, state, hideGov, fetchData, fetchPortfolios, syncUrl])
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -170,6 +227,17 @@ function MarketPageInner() {
             owners={data?.top_owners_by_sqft ?? []}
             metric="sqft"
             loading={loading}
+          />
+        </div>
+
+        {/* Portfolio owners — shared mailing address. Loaded from a
+           separate endpoint so its slow GROUP BY doesn't block the
+           rest of the dashboard. */}
+        <div className="mt-6">
+          <PortfolioTable
+            portfolios={portfolios}
+            loading={portfoliosLoading}
+            error={portfoliosError}
           />
         </div>
 
@@ -291,6 +359,20 @@ function FilterBar({
         >
           clear
         </button>
+        {(state || search) && (
+          <a
+            href={(() => {
+              const sp = new URLSearchParams()
+              if (search) sp.set("search", search)
+              if (state) sp.set("state", state)
+              return `/api/intelligence/properties/export?${sp.toString()}`
+            })()}
+            className="rounded-md border border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--intel-accent)] transition-colors hover:bg-[var(--intel-accent)] hover:text-[var(--intel-bg)]"
+            title="Download up to 10,000 matching properties as CSV"
+          >
+            ↓ export csv
+          </a>
+        )}
         <div className="ml-auto text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
           live across all sources
         </div>
@@ -302,9 +384,12 @@ function FilterBar({
 function KpiStrip({ data, loading }: { data: MarketResponse | null; loading: boolean }) {
   const total = data?.summary.total ?? 0
   const corp = data?.summary.corporate_pct ?? 0
-  // When >50% of records have no explicit corporate_owned (FL DOR is the
-  // main offender) the percentage is unreliable — show "N/A" instead.
+  // Hide the percentage when fewer than 10% of records carry an explicit
+  // corporate_owned value (the rest are entirely inferred from owner names,
+  // which isn't reliable enough to headline). When 10%+ have explicit data
+  // but inference still moved some rows, show the value with an "est." tag.
   const corpReliable = data?.summary.corporate_pct_reliable ?? true
+  const corpEstimated = data?.summary.corporate_pct_estimated ?? false
   const matched = data?.summary.matched.matched ?? 0
   const ownersCount = data?.concentration.total_owners_count ?? 0
   const showSkel = loading && !data
@@ -318,7 +403,9 @@ function KpiStrip({ data, loading }: { data: MarketResponse | null; loading: boo
         loading={showSkel}
         format={(n) => `${Math.round(n)}%`}
         unavailable={!corpReliable && !showSkel}
-        unavailableHint="N/A — most owners in this market lack a corporate-flag value (FL DOR data)"
+        unavailableHint="N/A — fewer than 10% of records in this market carry an explicit corporate-flag value (FL DOR is the main offender)"
+        tag={corpEstimated && corpReliable ? "est." : undefined}
+        tagHint="Some records had no explicit corporate_owned value — these are inferred from owner-name suffixes (LLC, INC, REIT, etc.)"
       />
       <Kpi label="portfolio matched" value={matched} loading={showSkel} />
       <Kpi label="distinct owners" value={ownersCount} loading={showSkel} />
@@ -334,6 +421,8 @@ function Kpi({
   format,
   unavailable,
   unavailableHint,
+  tag,
+  tagHint,
 }: {
   label: string
   value: number
@@ -342,11 +431,21 @@ function Kpi({
   format?: (n: number) => string
   unavailable?: boolean
   unavailableHint?: string
+  tag?: string
+  tagHint?: string
 }) {
   return (
     <div className="rounded-lg border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] p-4">
-      <div className="text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
-        {label}
+      <div className="flex items-baseline justify-between gap-2 text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
+        <span>{label}</span>
+        {tag && (
+          <span
+            className="rounded-sm border border-[var(--intel-border)] bg-[var(--intel-bg)] px-1 py-[1px] text-[9px] font-medium tracking-wider text-[var(--intel-text-muted)]"
+            title={tagHint}
+          >
+            {tag}
+          </span>
+        )}
       </div>
       <div
         data-mono
@@ -377,12 +476,34 @@ function Kpi({
 }
 
 function TypeBreakdown({ data, loading }: { data: MarketResponse | null; loading: boolean }) {
-  const types = data?.summary.by_type ?? []
+  // Rollup view (default) groups granular PropTracer types into the
+  // standard contractor-facing categories. The toggle drops back to the
+  // raw PropTracer breakdown for analyst-style use.
+  const [showDetailed, setShowDetailed] = useState(false)
+  const rollup = data?.summary.by_type_rollup ?? []
+  const detailed = data?.summary.by_type ?? []
+  const types = showDetailed ? detailed : rollup
   const total = types.reduce((a, t) => a + t.count, 0)
   const max = Math.max(1, ...types.map((t) => t.count))
+  const labelGridCols = showDetailed
+    ? "grid-cols-[170px_1fr_56px_56px]"
+    : "grid-cols-[140px_1fr_56px_56px]"
 
   return (
-    <Section title="Property type breakdown">
+    <Section
+      title="Property type breakdown"
+      action={
+        rollup.length > 0 || detailed.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setShowDetailed((v) => !v)}
+            className="text-[10px] uppercase tracking-widest text-[var(--intel-text-muted)] transition-colors hover:text-[var(--intel-accent)]"
+          >
+            {showDetailed ? "← summary view" : "show detailed types"}
+          </button>
+        ) : null
+      }
+    >
       {loading && !data ? (
         <SkeletonRows />
       ) : types.length === 0 ? (
@@ -393,9 +514,9 @@ function TypeBreakdown({ data, loading }: { data: MarketResponse | null; loading
             const pct = total > 0 ? (t.count / total) * 100 : 0
             const barWidth = (t.count / max) * 100
             return (
-              <div key={t.bucket} className="grid grid-cols-[140px_1fr_56px_56px] items-center gap-3">
+              <div key={t.bucket} className={`grid items-center gap-3 ${labelGridCols}`}>
                 <div className="truncate text-[12px] text-[var(--intel-text)]" title={t.bucket}>
-                  {prettyType(t.bucket)}
+                  {showDetailed ? t.bucket : prettyType(t.bucket)}
                 </div>
                 <div className="h-2.5 rounded bg-[var(--intel-bg)] overflow-hidden">
                   <div
@@ -444,18 +565,26 @@ function OwnershipPanel({ data, loading }: { data: MarketResponse | null; loadin
                 className="flex items-center justify-center bg-[var(--intel-accent)] text-[10px] font-semibold uppercase text-[var(--intel-bg)] transition-all duration-500"
                 style={{ width: `${corpPct}%` }}
               >
-                {corpPct >= 8 ? `${corpPct}% corp` : null}
+                {corpPct >= 8 ? `${corpPct}% business` : null}
               </div>
               <div
                 className="flex items-center justify-center bg-[var(--intel-bg-elev-2)] text-[10px] font-semibold uppercase text-[var(--intel-text)] transition-all duration-500"
                 style={{ width: `${indivPct}%` }}
               >
-                {indivPct >= 8 ? `${indivPct}% indiv` : null}
+                {indivPct >= 8 ? `${indivPct}% individ.` : null}
               </div>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-3 text-[11px]">
-              <Stat label="corporate" value={own?.corporate ?? 0} />
-              <Stat label="individual" value={own?.individual ?? 0} />
+              <Stat
+                label="business entity (est.)"
+                value={own?.corporate ?? 0}
+                infoTooltip="Inferred from owner-name suffixes (LLC, Inc, Corp, REIT, LP, etc.) when the source data doesn't carry an explicit corporate-flag field. Treat as a best-guess estimate, not a registry lookup."
+              />
+              <Stat
+                label="individual"
+                value={own?.individual ?? 0}
+                infoTooltip="Owner names that don't carry a corporate-suffix and look like a personal name (1–4 words, no LLC/Inc/Corp). Sole-proprietor LLCs may be misclassified as Business Entity."
+              />
             </div>
           </div>
 
@@ -464,8 +593,18 @@ function OwnershipPanel({ data, loading }: { data: MarketResponse | null; loadin
               portfolio match
             </div>
             <div className="grid grid-cols-2 gap-3 text-[11px]">
-              <Stat label="matched to entity" value={matched?.matched ?? 0} accent />
-              <Stat label="unmatched" value={matched?.unmatched ?? 0} muted />
+              <Stat
+                label="identified portfolio"
+                value={matched?.matched ?? 0}
+                accent
+                infoTooltip="Properties where the owner name resolves to a known REIT or operator in our entity registry — fully linked to a parent company, ticker, and subsidiary list."
+              />
+              <Stat
+                label="unidentified owner"
+                value={matched?.unmatched ?? 0}
+                muted
+                infoTooltip="Properties whose owner name didn't match the entity registry. Many of these are real businesses we just don't have a parent record for yet — see the Portfolio Owners table below for shared-mailing-address clusters that surface the same operator across multiple LLCs."
+              />
             </div>
           </div>
         </div>
@@ -479,16 +618,26 @@ function Stat({
   value,
   accent,
   muted,
+  infoTooltip,
 }: {
   label: string
   value: number
   accent?: boolean
   muted?: boolean
+  infoTooltip?: string
 }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-[var(--intel-text-dim)]">
-        {label}
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--intel-text-dim)]">
+        <span>{label}</span>
+        {infoTooltip && (
+          <span
+            className="inline-flex h-3 w-3 cursor-help items-center justify-center rounded-full border border-[var(--intel-border)] text-[8px] text-[var(--intel-text-muted)]"
+            title={infoTooltip}
+          >
+            ?
+          </span>
+        )}
       </div>
       <div
         data-mono
@@ -629,17 +778,146 @@ function OwnerTable({
   )
 }
 
+function PortfolioTable({
+  portfolios,
+  loading,
+  error,
+}: {
+  portfolios: PortfolioOwner[]
+  loading: boolean
+  error?: string | null
+}) {
+  return (
+    <Section
+      title="Portfolio owners"
+      action={
+        <div className="flex items-center gap-2">
+          {loading && (
+            <span className="text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
+              loading…
+            </span>
+          )}
+          <span
+            className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-[var(--intel-border)] text-[10px] text-[var(--intel-text-muted)]"
+            title="One real-world owner often holds many properties through different LLCs. Grouping records by tax-bill mailing address surfaces the true portfolio — even when each property is registered to a different shell entity."
+          >
+            ?
+          </span>
+        </div>
+      }
+    >
+      {error && !loading && (
+        <div className="mb-3 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">
+          Portfolios temporarily unavailable: {error}
+        </div>
+      )}
+      {loading && portfolios.length === 0 ? (
+        <SkeletonRows count={8} />
+      ) : portfolios.length === 0 ? (
+        <Empty />
+      ) : (
+        <div className="overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[var(--intel-border)] text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
+                <th className="py-2 pr-2 text-left font-medium w-8">#</th>
+                <th className="py-2 pr-2 text-left font-medium">mailing address</th>
+                <th className="py-2 pr-2 text-right font-medium">props</th>
+                <th className="py-2 pr-2 text-right font-medium">sqft</th>
+                <th className="py-2 pr-2 text-right font-medium">est. value</th>
+                <th className="py-2 pr-2 text-left font-medium">llc names</th>
+              </tr>
+            </thead>
+            <tbody>
+              {portfolios.map((p, i) => (
+                <PortfolioRowView key={`${p.mailing_address}-${i}`} index={i} p={p} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Section>
+  )
+}
+
+function PortfolioRowView({ index, p }: { index: number; p: PortfolioOwner }) {
+  const [expanded, setExpanded] = useState(false)
+  const llcs = p.llc_names ?? []
+  const previewLlcs = expanded ? llcs : llcs.slice(0, 3)
+  const hidden = Math.max(0, llcs.length - 3)
+  const cityState = [p.mailing_city, p.mailing_state].filter(Boolean).join(", ")
+  return (
+    <tr className="border-b border-[var(--intel-border)]/50 align-top hover:bg-[var(--intel-bg-elev-2)] transition-colors">
+      <td data-mono className="py-2 pr-2 text-[var(--intel-text-dim)] text-[11px]">
+        {index + 1}
+      </td>
+      <td className="py-2 pr-2">
+        <div
+          className="truncate text-[12px] text-[var(--intel-text)] max-w-[280px]"
+          title={p.mailing_address}
+        >
+          {p.mailing_address}
+        </div>
+        {cityState && (
+          <div className="text-[10px] text-[var(--intel-text-muted)]">
+            {cityState}
+            {p.mailing_zip ? ` ${p.mailing_zip}` : ""}
+          </div>
+        )}
+      </td>
+      <td
+        data-mono
+        className="py-2 pr-2 text-right text-[12px] text-[var(--intel-accent)] font-semibold"
+      >
+        {p.property_count.toLocaleString()}
+      </td>
+      <td data-mono className="py-2 pr-2 text-right text-[12px] text-[var(--intel-text)]">
+        {fmtSqft(p.total_sqft)}
+      </td>
+      <td
+        data-mono
+        className="py-2 pr-2 text-right text-[12px] text-[var(--intel-text-muted)]"
+      >
+        {fmtMoney(p.total_value)}
+      </td>
+      <td className="py-2 pr-2 text-[11px] text-[var(--intel-text-muted)]">
+        <div className="flex flex-col gap-0.5 max-w-[420px]">
+          {previewLlcs.map((name) => (
+            <div key={name} className="truncate" title={name}>
+              {name}
+            </div>
+          ))}
+          {hidden > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded((x) => !x)}
+              className="text-left text-[10px] uppercase tracking-widest text-[var(--intel-accent)] hover:text-[var(--intel-accent-hover)]"
+            >
+              {expanded ? "show less" : `and ${hidden} more`}
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 function Section({
   title,
   children,
+  action,
 }: {
   title: string
   children: React.ReactNode
+  action?: React.ReactNode
 }) {
   return (
     <div className="rounded-lg border border-[var(--intel-border)] bg-[var(--intel-bg-elev)]">
-      <div className="border-b border-[var(--intel-border)] px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] text-[var(--intel-text-muted)]">
-        {title}
+      <div className="flex items-center justify-between border-b border-[var(--intel-border)] px-4 py-2.5">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--intel-text-muted)]">
+          {title}
+        </div>
+        {action}
       </div>
       <div className="p-4">{children}</div>
     </div>

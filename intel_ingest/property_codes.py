@@ -342,6 +342,227 @@ def is_commercial_nc(
 # -------------------------------------------------------------------------
 
 
+
+# -------------------------------------------------------------------------
+# Ohio — Land Use Code (LUC). Ohio Dept of Taxation publishes a 3-digit
+# code system used by every county auditor (Cuyahoga, Franklin, etc.).
+#   100-199: agricultural
+#   300-399: industrial real
+#   400-499: commercial real (offices, retail, hotels, healthcare)
+#   500-599: residential
+#   600-699: exempt
+#   700-799: utility / mineral / public utility
+# We also accept a separate luc_description text field (Cuyahoga ships
+# this) for richer bucketing — same idea as Cook's property_type_use.
+# -------------------------------------------------------------------------
+
+_OH_LUC_BUCKETS: list[tuple[int, int, str, str]] = [
+    (300, 399, "industrial", "Industrial real"),
+    (400, 419, "retail", "Commercial — retail / store"),
+    (420, 429, "hospitality", "Commercial — hotel / motel / lodging"),
+    (430, 439, "office", "Commercial — office"),
+    (440, 449, "industrial", "Commercial — warehousing / distribution"),
+    (450, 459, "retail", "Commercial — restaurant / food service"),
+    (460, 469, "retail", "Commercial — automotive / service"),
+    (470, 479, "office", "Commercial — financial / banking"),
+    (480, 489, "healthcare", "Commercial — medical / healthcare"),
+    (490, 499, "other_commercial", "Commercial — other"),
+]
+
+
+def classify_oh_luc(
+    code: str | None,
+    desc: str | None = None,
+) -> tuple[str, str, bool]:
+    """
+    Map an Ohio LUC (3-digit) to (bucket, description, is_commercial).
+    Pass `desc` from a luc-description field (Cuyahoga's tax_luc_description)
+    when available — the keyword scan there finds buckets the numeric
+    range misses (self_storage, multifamily within 4xx, etc.).
+    """
+    desc_u = (desc or "").strip().upper()
+
+    # Prefer description signals when present — they're more specific.
+    if desc_u:
+        if "STORAGE" in desc_u:
+            return ("self_storage", "Self storage", True)
+        if "OFFICE" in desc_u:
+            return ("office", "Office", True)
+        if "APARTMENT" in desc_u or "MULTIFAMILY" in desc_u or "MULTI-FAMILY" in desc_u:
+            return ("multifamily", "Multifamily", True)
+        if "HOTEL" in desc_u or "MOTEL" in desc_u or "LODG" in desc_u:
+            return ("hospitality", "Hospitality", True)
+        if "MEDICAL" in desc_u or "HOSPITAL" in desc_u or "NURSING" in desc_u:
+            return ("healthcare", "Healthcare", True)
+        if "WAREHOUS" in desc_u or "INDUSTRIAL" in desc_u or "MANUFACT" in desc_u:
+            return ("industrial", "Industrial", True)
+        if "MIXED" in desc_u:
+            return ("mixed_use", "Mixed use", True)
+        if "RETAIL" in desc_u or "STORE" in desc_u or "SHOPPING" in desc_u:
+            return ("retail", "Retail", True)
+        if "RESTAURANT" in desc_u or "FOOD" in desc_u:
+            return ("retail", "Restaurant", True)
+        if "RESIDENTIAL" in desc_u or "SINGLE FAMILY" in desc_u:
+            return ("residential", desc_u, False)
+        if "AGRIC" in desc_u or "FARM" in desc_u:
+            return ("agricultural", desc_u, False)
+        if "VACANT" in desc_u:
+            return ("vacant", desc_u, False)
+        if "EXEMPT" in desc_u:
+            return ("other_commercial", "Exempt", False)
+
+    # Fallback: numeric LUC range.
+    s = (code or "").strip()
+    if not s:
+        return ("unknown", "Unknown", False)
+    try:
+        n = int(s)
+    except ValueError:
+        return ("unknown", f"OH LUC {s}", False)
+
+    if 500 <= n < 600:
+        return ("residential", f"OH LUC {n}", False)
+    if 100 <= n < 300:
+        return ("agricultural", f"OH LUC {n}", False)
+    if 600 <= n < 700:
+        return ("other_commercial", "Exempt", False)
+
+    for lo, hi, bucket, dsc in _OH_LUC_BUCKETS:
+        if lo <= n <= hi:
+            return (bucket, dsc, True)
+
+    if 700 <= n < 800:
+        return ("other_commercial", f"OH utility {n}", True)
+    return ("unknown", f"OH LUC {n}", False)
+
+
+def is_commercial_oh(code: str | None, desc: str | None = None) -> bool:
+    return classify_oh_luc(code, desc)[2]
+
+
+# -------------------------------------------------------------------------
+# Georgia — Fulton County uses a "LUCode" land-use code distinct from
+# the broader ClassCode. ClassCode is the 7-class statewide residential/
+# commercial/agriculture grouping; LUCode is finer-grained. We classify
+# off LUCode when present, ClassCode as fallback.
+#
+# Fulton LUCodes are messy and county-specific. The reliable signal is:
+#   100s = residential
+#   200s = agricultural
+#   300s = commercial
+#   400s = industrial
+#   500s = institutional / public
+#   600s = utility
+# -------------------------------------------------------------------------
+
+
+def classify_ga_lucode(
+    code: str | None,
+    class_code: str | None = None,
+) -> tuple[str, str, bool]:
+    """
+    Map a Fulton-County (GA) LUCode to (bucket, description, is_commercial).
+    Falls back to GA ClassCode when LUCode is missing.
+    """
+    s = (code or "").strip()
+    cls = (class_code or "").strip()
+
+    def _classify_lucode_int(n: int) -> tuple[str, str, bool]:
+        if 100 <= n < 200:
+            return ("residential", f"GA LUC {n}", False)
+        if 200 <= n < 300:
+            return ("agricultural", f"GA LUC {n}", False)
+        if 300 <= n < 400:
+            # 3xx commercial — split a bit by sub-range
+            if 310 <= n <= 319:
+                return ("retail", f"GA commercial retail ({n})", True)
+            if 320 <= n <= 329:
+                return ("office", f"GA commercial office ({n})", True)
+            if 330 <= n <= 339:
+                return ("hospitality", f"GA commercial lodging ({n})", True)
+            if 340 <= n <= 349:
+                return ("healthcare", f"GA commercial medical ({n})", True)
+            if 350 <= n <= 359:
+                return ("industrial", f"GA commercial warehouse ({n})", True)
+            return ("other_commercial", f"GA commercial ({n})", True)
+        if 400 <= n < 500:
+            return ("industrial", f"GA industrial ({n})", True)
+        if 500 <= n < 600:
+            return ("other_commercial", f"GA institutional ({n})", False)
+        if 600 <= n < 700:
+            return ("other_commercial", f"GA utility ({n})", True)
+        return ("unknown", f"GA LUC {n}", False)
+
+    if s:
+        try:
+            return _classify_lucode_int(int(float(s)))
+        except (ValueError, TypeError):
+            pass
+
+    # ClassCode fallback — single digit / letter.
+    if cls:
+        c = cls[0]
+        if c == "3":
+            return ("retail", "GA class 3 (commercial/industrial)", True)
+        if c in {"1", "2"}:
+            return ("residential", f"GA class {c}", False)
+        if c == "4":
+            return ("other_commercial", "GA class 4 (utility)", True)
+
+    return ("unknown", "Unknown", False)
+
+
+def is_commercial_ga(code: str | None, class_code: str | None = None) -> bool:
+    return classify_ga_lucode(code, class_code)[2]
+
+
+
+# -------------------------------------------------------------------------
+# Missouri — Property Class Code (Class 1-4 statutory grouping):
+#   1 = Residential
+#   2 = Agricultural
+#   3 = Commercial (offices, retail, hotels)
+#   4 = Industrial / utility / public service / leasehold
+# Some counties subdivide into 3xx/4xx ranges; we accept either form.
+# -------------------------------------------------------------------------
+
+
+def classify_mo_class(code) -> tuple[str, str, bool]:
+    """Bucket on the leading digit so single-digit ("3"), 2-digit ("32"),
+    and 3-digit ("312") codes all map to the same statutory class.
+    Float-stringed inputs ("30.0") are normalized to int first."""
+    if code is None:
+        return ("unknown", "Unknown", False)
+    s = str(code).strip()
+    if not s:
+        return ("unknown", "Unknown", False)
+    # Strip a trailing ".0" / fractional component if any (some sources
+    # ship integers as floats over JSON).
+    if "." in s:
+        try:
+            s = str(int(float(s)))
+        except (ValueError, TypeError):
+            return ("unknown", f"MO class {s}", False)
+    if not s or not s[0].isdigit():
+        return ("unknown", f"MO class {s}", False)
+    head = int(s[0])
+    if head == 1:
+        return ("residential", f"MO class {s}", False)
+    if head == 2:
+        return ("agricultural", f"MO class {s}", False)
+    if head == 3:
+        return ("other_commercial", f"MO commercial ({s})", True)
+    if head == 4:
+        return ("industrial", f"MO industrial ({s})", True)
+    if head == 5:
+        return ("other_commercial", f"MO misc ({s})", True)
+    return ("unknown", f"MO class {s}", False)
+
+
+def is_commercial_mo(code) -> bool:
+    return classify_mo_class(code)[2]
+
+
 def classify_ar_parceltype(parceltype: str | None) -> tuple[str, str, bool]:
     if not parceltype:
         return ("unknown", "Unknown", False)

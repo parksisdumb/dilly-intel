@@ -46,6 +46,9 @@ from intel_ingest import (
     SupabaseUpserter,
     Progress,
     classify_ar_parceltype,
+    classify_oh_luc,
+    classify_ga_lucode,
+    classify_mo_class,
 )
 
 ROOT = Path(__file__).parent
@@ -66,6 +69,9 @@ class StateConfig:
     field_map: dict[str, str]
     use_code_field: str
     classifier: str  # name of classify_* function
+    # Server-side WHERE clause. Use this to skip residential / vacant /
+    # empty-class records before they leave the database — pages of
+    # ALL-rows-then-client-filter waste paginate budget and bloat IO.
     where: str = "1=1"
     progress_file: Path = Path()  # populated post-init
     fips_prefix: str = ""  # 2-digit state FIPS for county_fips assembly
@@ -104,6 +110,62 @@ STATE_PRESETS: dict[str, StateConfig] = {
         progress_file=ROOT / "progress_ar.json",
         fips_prefix="05",
     ),
+    # Cuyahoga County, OH (Cleveland). MyPLACE service, layer 2 = Parcel.
+    # Field map is informational; the dispatcher uses map_oh_cuyahoga_feature.
+    "oh_cuyahoga": StateConfig(
+        state="Ohio - Cuyahoga County",
+        state_abbr="OH-CUY",
+        endpoint=(
+            "https://gis.cuyahogacounty.us/server/rest/services/MyPLACE/"
+            "Parcels_WMA_GJOIN_WGS84/MapServer/2"
+        ),
+        source_detail="oh_cuyahoga_public",
+        page_size=1000,
+        field_map={},  # custom mapper
+        use_code_field="tax_luc",
+        classifier="oh_luc",
+        progress_file=ROOT / "progress_oh_cuyahoga.json",
+        fips_prefix="39",
+    ),
+    # Franklin County, OH (Columbus). Tax Parcel layer 0.
+    "oh_franklin": StateConfig(
+        state="Ohio - Franklin County",
+        state_abbr="OH-FRA",
+        endpoint=(
+            "https://gis.franklincountyohio.gov/hosting/rest/services/"
+            "ParcelFeatures/Parcel_Features/MapServer/0"
+        ),
+        source_detail="oh_franklin_public",
+        page_size=2000,  # service maxRecordCount=3000; stay under for safety
+        field_map={},
+        use_code_field="CLASSCD",
+        classifier="oh_luc",
+        progress_file=ROOT / "progress_oh_franklin.json",
+        fips_prefix="39",
+    ),
+    # Fulton County, GA (Atlanta). Tax_Parcels FeatureServer layer 0.
+    # No bldg sqft published — records ingest with NULL building_sqft.
+    "ga_fulton": StateConfig(
+        state="Georgia - Fulton County",
+        state_abbr="GA-FUL",
+        endpoint=(
+            "https://services1.arcgis.com/AQDHTHDrZzfsFsB5/arcgis/rest/"
+            "services/Tax_Parcels/FeatureServer/0"
+        ),
+        source_detail="ga_fulton_public",
+        page_size=2000,
+        field_map={},
+        use_code_field="LUCode",
+        classifier="ga_lucode",
+        progress_file=ROOT / "progress_ga_fulton.json",
+        fips_prefix="13",
+    ),
+    # GA-DeKalb and MO-StLouisCity were investigated 2026-05-09 but
+    # their public-tier datasets either don't carry property-type data
+    # (DeKalb: BLDGAREA / CLASSCD / USECD all NULL across 245k rows)
+    # or use a non-statutory class-code system that defies our standard
+    # commercial filter (St Louis: no PCC >= 30 found in 135k rows even
+    # though the docs suggest 30-49 = commercial). See SCRAPER_TODO.md.
 }
 
 
@@ -191,6 +253,305 @@ def map_ar_feature(attr: dict, fips_prefix: str) -> dict | None:
     }
 
 
+def _city_from_pstlcitystzip(s: str | None) -> str | None:
+    """Franklin County ships an mail-style "COLUMBUS OH 43215" combined
+    field; pull just the city portion. Trailing tokens are state + zip."""
+    if not s:
+        return None
+    s = s.strip()
+    if not s:
+        return None
+    parts = s.rsplit(" ", 2)
+    if len(parts) >= 3 and parts[-1].replace("-", "").isdigit() and len(parts[-2]) == 2:
+        return parts[0].title() or None
+    return s.title()
+
+
+def map_oh_cuyahoga_feature(attr: dict) -> dict | None:
+    """Cuyahoga County (Cleveland), OH parcel mapper.
+    Source layer fields documented at
+    /server/rest/services/MyPLACE/Parcels_WMA_GJOIN_WGS84/MapServer/2."""
+    parcel_id = _str(attr.get("parcel_id"))
+    if not parcel_id:
+        return None
+
+    street = _str(attr.get("par_street"))
+    addr_full = _str(attr.get("par_addr_all"))
+    street = street or addr_full
+    city = _str(attr.get("par_city"))
+    if not street or not city:
+        return None
+
+    luc = _str(attr.get("tax_luc"))
+    luc_desc = _str(attr.get("tax_luc_description"))
+    bucket, desc, is_comm = classify_oh_luc(luc, luc_desc)
+    if not is_comm:
+        return None
+
+    zip_code = _str(attr.get("par_zip"))
+    bldgsf = _normalize_int(attr.get("total_square_ft"))
+    market_val = _normalize_float(attr.get("certified_tax_total"))
+
+    return {
+        "external_id": f"OH-CUY-{parcel_id}",
+        "source_detail": "oh_cuyahoga_public",
+        "street_address": street,
+        "city": city,
+        "state": "OH",
+        "postal_code": (zip_code or "")[:10] or None,
+        "county_fips": "39035",
+        "county": "Cuyahoga",
+        "owner_name": _str(attr.get("parcel_owner")),
+        "raw_owner_name": _str(attr.get("parcel_owner")),
+        "property_type": bucket,
+        "property_use_code": luc,
+        "property_use_desc": luc_desc or desc,
+        "building_sqft": bldgsf,
+        # assessed_value is int-typed in the schema; AR convention.
+        "estimated_value": market_val,
+        "assessed_value": _normalize_int(attr.get("certified_tax_total")),
+        "apn": parcel_id,
+        "parcel_id": parcel_id,
+    }
+
+
+def map_oh_franklin_feature(attr: dict) -> dict | None:
+    """Franklin County (Columbus), OH parcel mapper. Layer 0."""
+    parcel_id = _str(attr.get("PARCELID"))
+    if not parcel_id:
+        return None
+
+    street = _str(attr.get("SITEADDRESS"))
+    if not street:
+        return None
+
+    city = _city_from_pstlcitystzip(_str(attr.get("PSTLCITYSTZIP")))
+    if not city:
+        # Default to Columbus — the bulk of Franklin County is the Columbus
+        # metro and most parcels lacking PSTLCITYSTZIP are still in city.
+        city = "Columbus"
+
+    classcd = _str(attr.get("CLASSCD"))
+    bucket, desc, is_comm = classify_oh_luc(classcd, None)
+    if not is_comm:
+        return None
+
+    zip_code = _str(attr.get("ZIPCD"))
+    bldgsf = _normalize_int(attr.get("BLDGAREA"))
+    year_built = _normalize_int(attr.get("RESYRBLT"))
+    market_val = _normalize_float(attr.get("TOTVALUEBASE"))
+
+    return {
+        "external_id": f"OH-FRA-{parcel_id}",
+        "source_detail": "oh_franklin_public",
+        "street_address": street,
+        "city": city,
+        "state": "OH",
+        "postal_code": (zip_code or "")[:10] or None,
+        "county_fips": "39049",
+        "county": "Franklin",
+        "owner_name": _str(attr.get("OWNERNME1")),
+        "raw_owner_name": _str(attr.get("OWNERNME1")),
+        "property_type": bucket,
+        "property_use_code": classcd,
+        "property_use_desc": desc,
+        "building_sqft": bldgsf,
+        "year_built": year_built,
+        # assessed_value is int-typed; AR convention.
+        "estimated_value": market_val,
+        "assessed_value": _normalize_int(attr.get("TOTVALUEBASE")),
+        "apn": parcel_id,
+        "parcel_id": parcel_id,
+    }
+
+
+def _unused_map_ga_dekalb_feature(attr: dict) -> dict | None:  # noqa: F841
+    """STAGED — not currently dispatched. DeKalb's open dataset has
+    OWNERNME1 / SITEADDRESS / CNTASSDVAL but BLDGAREA / CLASSCD /
+    USECD / LANDUSE are all NULL across the 245k records, so we
+    can't determine commercial vs residential without owner-name
+    heuristics. Revisit when a richer dataset is available."""
+    """DeKalb County (east Atlanta), GA parcel mapper.
+    Tyler/CAMA-style schema. PSTLCITY is the tax-mailing city (matches
+    site city for owner-occupied; differs for absentee). Falls back to
+    `CITY` field when PSTLCITY is empty."""
+    parcel_id = _str(attr.get("PARCELID"))
+    if not parcel_id:
+        return None
+
+    street = _str(attr.get("SITEADDRESS"))
+    if not street:
+        return None
+
+    city = _str(attr.get("PSTLCITY")) or _str(attr.get("CITY"))
+    if not city:
+        # DeKalb County encompasses parts of Atlanta + Decatur + others;
+        # default to "Decatur" (county seat) when unknown.
+        city = "Decatur"
+
+    classcd = _str(attr.get("CLASSCD"))
+    classdsc = _str(attr.get("CLASSDSCRP"))
+    usedsc = _str(attr.get("USEDSCRP"))
+    bucket, desc, is_comm = classify_ga_lucode(classcd, None)
+    # If the Georgia LUCode lookup didn't find commercial, try the
+    # description text — DeKalb's CLASSCD doesn't always align with the
+    # GA statewide code system.
+    if not is_comm and (classdsc or usedsc):
+        text = (classdsc or "" + " " + (usedsc or "")).lower()
+        if any(k in text for k in ("commercial", "industrial", "office", "retail", "warehouse", "apartment")):
+            bucket = "other_commercial"
+            desc = classdsc or usedsc or "Commercial"
+            is_comm = True
+    if not is_comm:
+        return None
+
+    zip_code = _str(attr.get("PSTLZIP5")) or _str(attr.get("ZIP"))
+    bldgsf = _normalize_int(attr.get("BLDGAREA"))
+    year_built = _normalize_int(attr.get("RESYRBLT"))
+    market_val = _normalize_float(attr.get("CNTASSDVAL"))
+
+    return {
+        "external_id": f"GA-DEK-{parcel_id}",
+        "source_detail": "ga_dekalb_public",
+        "street_address": street,
+        "city": city,
+        "state": "GA",
+        "postal_code": (zip_code or "")[:10] or None,
+        "county_fips": "13089",
+        "county": "DeKalb",
+        "owner_name": _str(attr.get("OWNERNME1")),
+        "raw_owner_name": _str(attr.get("OWNERNME1")),
+        "property_type": bucket,
+        "property_use_code": classcd,
+        "property_use_desc": classdsc or usedsc or desc,
+        "building_sqft": bldgsf,
+        "year_built": year_built,
+        # assessed_value is int-typed; estimated_value is numeric.
+        "estimated_value": market_val,
+        "assessed_value": _normalize_int(attr.get("CNTASSDVAL")),
+        "apn": parcel_id,
+        "parcel_id": parcel_id,
+    }
+
+
+def _unused_map_mo_stlouis_city_feature(attr: dict) -> dict | None:  # noqa: F841
+    """STAGED — not currently dispatched. PropertyClassCode appears to
+    use a non-standard internal code system (no values >= 30 in 135k
+    rows even though MO statute defines Classes 1-4). Need access to
+    the assessor's code dictionary before we can classify commercial
+    vs residential reliably."""
+    """St Louis City (independent city), MO parcel mapper. PascalCase
+    field names. ZIP is double-typed (numeric) so cast to string and
+    pad to 5 digits."""
+    parcel_id = _str(attr.get("ParcelId"))
+    if not parcel_id:
+        return None
+
+    street = _str(attr.get("SITEADDR"))
+    if not street:
+        return None
+
+    classcode = attr.get("PropertyClassCode")
+    bucket, desc, is_comm = classify_mo_class(classcode)
+    if not is_comm:
+        return None
+
+    # OwnerCity is the tax-mailing city (could be anywhere); for the
+    # property city we hardcode "St. Louis" since this dataset is the
+    # independent-city universe.
+    city = "St. Louis"
+
+    zip_raw = attr.get("ZIP")
+    zip_code: str | None = None
+    if zip_raw is not None:
+        try:
+            z = int(float(zip_raw))
+            zip_code = str(z).zfill(5) if z > 0 else None
+        except (ValueError, TypeError):
+            zip_code = None
+
+    bldgsf = _normalize_int(attr.get("SQFT"))
+    year_built = _normalize_int(attr.get("FirstYearBuilt"))
+    market_val = _normalize_float(attr.get("AsdTotal"))
+
+    return {
+        "external_id": f"MO-STL-{parcel_id}",
+        "source_detail": "mo_stlouis_city_public",
+        "street_address": street,
+        "city": city,
+        "state": "MO",
+        "postal_code": zip_code,
+        "county_fips": "29510",   # St Louis City independent FIPS
+        "county": "St. Louis City",
+        "owner_name": _str(attr.get("OwnerName")),
+        "raw_owner_name": _str(attr.get("OwnerName")),
+        "property_type": bucket,
+        "property_use_code": str(classcode) if classcode is not None else None,
+        "property_use_desc": desc,
+        "building_sqft": bldgsf,
+        "year_built": year_built,
+        "estimated_value": market_val,
+        "assessed_value": _normalize_int(attr.get("AsdTotal")),
+        "apn": parcel_id,
+        "parcel_id": parcel_id,
+    }
+
+
+def map_ga_fulton_feature(attr: dict) -> dict | None:
+    """Fulton County (Atlanta), GA parcel mapper.
+    No bldg sqft / city in source — bldgsf left NULL, city defaulted
+    when address parse fails."""
+    parcel_id = _str(attr.get("ParcelID"))
+    if not parcel_id:
+        return None
+
+    street = _str(attr.get("Address"))
+    if not street:
+        # Fall back to component fields if `Address` is empty.
+        parts = [
+            _str(attr.get("AddrNumber")),
+            _str(attr.get("AddrPreDir")),
+            _str(attr.get("AddrStreet")),
+            _str(attr.get("AddrSuffix")),
+        ]
+        parts = [p for p in parts if p]
+        street = " ".join(parts) if parts else None
+    if not street:
+        return None
+
+    luc = _str(attr.get("LUCode"))
+    classcd = _str(attr.get("ClassCode"))
+    bucket, desc, is_comm = classify_ga_lucode(luc, classcd)
+    if not is_comm:
+        return None
+
+    # Fulton spans Atlanta + Sandy Springs + Roswell + Alpharetta + Johns
+    # Creek + Milton + Union City + College Park. We don't have a per-
+    # parcel city field, so default to "Atlanta" — the dominant city —
+    # and let downstream geocoding refine it later.
+    city = "Atlanta"
+
+    return {
+        "external_id": f"GA-FUL-{parcel_id}",
+        "source_detail": "ga_fulton_public",
+        "street_address": street,
+        "city": city,
+        "state": "GA",
+        "postal_code": None,
+        "county_fips": "13121",
+        "county": "Fulton",
+        "owner_name": _str(attr.get("Owner")),
+        "raw_owner_name": _str(attr.get("Owner")),
+        "property_type": bucket,
+        "property_use_code": luc,
+        "property_use_desc": desc,
+        # No building sqft published; stays NULL.
+        "building_sqft": None,
+        "apn": parcel_id,
+        "parcel_id": parcel_id,
+    }
+
+
 def map_generic_feature(attr: dict, cfg: dict, classifier_fn) -> dict | None:
     """
     Generic mapper for users who pass --field-map JSON. Field map keys are
@@ -226,6 +587,9 @@ def map_generic_feature(attr: dict, cfg: dict, classifier_fn) -> dict | None:
 # Classifier registry for the generic path.
 CLASSIFIERS = {
     "ar_parceltype": classify_ar_parceltype,
+    "oh_luc": classify_oh_luc,
+    "ga_lucode": classify_ga_lucode,
+    "mo_class": classify_mo_class,
 }
 
 
@@ -299,6 +663,12 @@ def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
             total_seen += 1
             if cfg.state_abbr == "AR":
                 payload = map_ar_feature(attr, cfg.fips_prefix)
+            elif cfg.state_abbr == "OH-CUY":
+                payload = map_oh_cuyahoga_feature(attr)
+            elif cfg.state_abbr == "OH-FRA":
+                payload = map_oh_franklin_feature(attr)
+            elif cfg.state_abbr == "GA-FUL":
+                payload = map_ga_fulton_feature(attr)
             else:
                 fn = CLASSIFIERS.get(cfg.classifier)
                 if fn is None:

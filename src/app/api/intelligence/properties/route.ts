@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { parseLocationInput } from "@/lib/intel/location-parse"
+import {
+  ALL_ROLLUP_PATTERNS,
+  patternsForCategory,
+} from "@/lib/intel/property-types"
 
 export const dynamic = "force-dynamic"
 
@@ -25,19 +29,14 @@ const PROPERTY_SOURCES = [
 const PER_PAGE_DEFAULT = 24
 const PER_PAGE_MAX = 96
 
-// Maps the user-facing checkbox label to ilike substring patterns.
-// `Other` is handled separately as the "none of the above" bucket.
-const PROPERTY_TYPE_PATTERNS: Record<string, string[]> = {
-  Office: ["office"],
-  Retail: ["retail", "shopping", "store"],
-  Industrial: ["industrial", "warehouse", "manufactur", "flex"],
-  Multifamily: ["multifamily", "apartment", "multi-family", "residential"],
-  Healthcare: ["healthcare", "medical", "hospital", "nursing", "dialysis", "clinic"],
-  "Self Storage": ["storage"],
-  "Mixed Use": ["mixed"],
-}
-
-const KNOWN_PATTERNS_FLAT: string[] = Object.values(PROPERTY_TYPE_PATTERNS).flat()
+// User-facing filter checkbox labels are rollup categories from
+// src/lib/intel/property-types.ts. Each category's ILIKE substring
+// patterns come from the same source so the filter behavior matches
+// the market dashboard's by_type_rollup grouping exactly.
+//
+// `Other` is handled separately as the "matches none of the known
+// rollup patterns" bucket.
+const KNOWN_PATTERNS_FLAT: string[] = ALL_ROLLUP_PATTERNS
 
 const SELECT_COLUMNS = [
   "id",
@@ -94,8 +93,8 @@ function parsePropertyTypes(raw: string | null): PropertyTypeFilter | null {
       includeOther = true
       continue
     }
-    const pats = PROPERTY_TYPE_PATTERNS[t]
-    if (pats) ilikePatterns.push(...pats)
+    const pats = patternsForCategory(t)
+    if (pats.length > 0) ilikePatterns.push(...pats)
   }
   return { ilikePatterns, includeOther }
 }
@@ -146,6 +145,8 @@ type FilterParams = {
   portfolioMatch: string
   minYear: number | null
   maxYear: number | null
+  minValue: number | null
+  maxValue: number | null
   types: PropertyTypeFilter | null
   // Radius search (when all three present, bounding-box pre-filter is
   // applied at the DB layer; exact Haversine refinement happens client-
@@ -229,11 +230,22 @@ function applyFilters<T>(qIn: T, params: FilterParams): T {
   if (params.maxYear != null) {
     q = q.lte("year_built", params.maxYear)
   }
+  // Estimated value range. The schema stores this in `estimated_value`
+  // (numeric); we accept dollars from the UI and pass through as-is.
+  if (params.minValue != null) {
+    q = q.gte("estimated_value", params.minValue)
+  }
+  if (params.maxValue != null) {
+    q = q.lte("estimated_value", params.maxValue)
+  }
   if (params.types) {
     const { ilikePatterns, includeOther } = params.types
     const orParts: string[] = []
     for (const p of ilikePatterns) {
-      orParts.push(`property_type.ilike.%${p}%`)
+      // Wrap value in double-quotes so embedded commas / colons / parens
+      // (e.g. "bar, tavern", "neighborhood: shopping", "homes (retired")
+      // don't get parsed as PostgREST logic-tree separators.
+      orParts.push(`property_type.ilike."%${p}%"`)
     }
     if (includeOther) {
       // "Other" = property_type is NULL, OR matches none of the known buckets.
@@ -277,6 +289,8 @@ export async function GET(req: NextRequest) {
   const portfolioMatch = (sp.get("portfolio_match") || "all").toLowerCase()
   const minYear = parseNumber(sp.get("min_year"))
   const maxYear = parseNumber(sp.get("max_year"))
+  const minValue = parseNumber(sp.get("min_value"))
+  const maxValue = parseNumber(sp.get("max_value"))
   const types = parsePropertyTypes(sp.get("property_types"))
 
   // Radius search params — all three required to engage. Validated as
@@ -294,7 +308,8 @@ export async function GET(req: NextRequest) {
 
   const filters: FilterParams = {
     city, stateAbbr, zip, zipPrefix, county,
-    minSqft, maxSqft, ownerType, portfolioMatch, minYear, maxYear, types,
+    minSqft, maxSqft, ownerType, portfolioMatch,
+    minYear, maxYear, minValue, maxValue, types,
     centerLat, centerLon, radiusMiles,
   }
 
@@ -302,10 +317,33 @@ export async function GET(req: NextRequest) {
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
-  // Use `planned` counts — Postgres EXPLAIN-based estimate, near-instant on
-  // large tables. Exact counts time out on the full intel_properties scan.
-  // The top-bar stats and pagination total tolerate a small estimate error.
-  const COUNT_MODE = "planned" as const
+  // Hybrid count mode. The partial index
+  // intel_properties_market_city_state_idx is on (state, lower(city),
+  // source_detail), so the planner only stays under the 60s budget when
+  // the predicate includes the leading column (state) or another
+  // narrow predicate (zip). City-alone searches like ?search=memphis
+  // would otherwise run an exact count(*) against all 1.1M rows
+  // filtered only by `city ilike '%memphis%'` and time out.
+  //
+  //   - state OR zip OR zipPrefix present  -> "exact"
+  //     (state caps the universe at ~100k; zip is tighter still.)
+  //   - county+state, city+state, etc.    -> "exact" (state covers it)
+  //   - city alone, county alone, no filt -> "planned"
+  //     (planned reads pg_class.reltuples after EXPLAIN selectivity
+  //     estimates — accurate within ~10% if ANALYZE is current.)
+  //
+  // Stat queries (corporate / matched) reuse COUNT_MODE so they share
+  // the trade-off.
+  //
+  // Operational dependency: the planner estimates are only as good as
+  // pg_class statistics. Schedule `ANALYZE intel_properties` after each
+  // bulk ingest run, or set up a nightly `VACUUM (ANALYZE)` cron — without
+  // it, the planned counts will drift downward over time as the table
+  // grows past the last sampled snapshot.
+  const useExactCount = !!(
+    filters.stateAbbr || filters.zip || filters.zipPrefix
+  )
+  const COUNT_MODE: "exact" | "planned" = useExactCount ? "exact" : "planned"
 
   // Main data query — fetched with the entity left-joined.
   const dataQuery = applyFilters(
@@ -440,6 +478,7 @@ export async function GET(req: NextRequest) {
         apn: p.apn ?? p.parcel_id,
         proptracer_id: p.proptracer_id,
         enrichment_status: p.enrichment_status,
+        source_detail: p.source_detail,
         entity,
         satellite_url: buildSatelliteUrl(lat, lng, apiKey),
         updated_at: p.updated_at,

@@ -27,6 +27,8 @@ function parseFilters(sp: URLSearchParams): Filters {
     portfolioMatch: (sp.get("portfolio_match") ?? "all") as Filters["portfolioMatch"],
     minYear: sp.get("min_year") ?? "",
     maxYear: sp.get("max_year") ?? "",
+    minValue: sp.get("min_value") ?? "",
+    maxValue: sp.get("max_value") ?? "",
     nearAddress: sp.get("near") ?? "",
     radiusMiles: parseIntDefault(sp.get("radius_miles"), DEFAULT_RADIUS_MILES),
   }
@@ -50,6 +52,8 @@ function filtersToParams(f: Filters, page: number): URLSearchParams {
   if (f.portfolioMatch !== "all") sp.set("portfolio_match", f.portfolioMatch)
   if (f.minYear) sp.set("min_year", f.minYear)
   if (f.maxYear) sp.set("max_year", f.maxYear)
+  if (f.minValue) sp.set("min_value", f.minValue)
+  if (f.maxValue) sp.set("max_value", f.maxValue)
   if (f.nearAddress) sp.set("near", f.nearAddress)
   if (f.radiusMiles !== DEFAULT_RADIUS_MILES) sp.set("radius_miles", String(f.radiusMiles))
   if (page > 1) sp.set("page", String(page))
@@ -74,6 +78,8 @@ function filtersToApiParams(f: Filters, page: number): URLSearchParams {
   if (f.portfolioMatch !== "all") sp.set("portfolio_match", f.portfolioMatch)
   if (f.minYear) sp.set("min_year", f.minYear)
   if (f.maxYear) sp.set("max_year", f.maxYear)
+  if (f.minValue) sp.set("min_value", f.minValue)
+  if (f.maxValue) sp.set("max_value", f.maxValue)
   if (f.nearAddress) {
     // "lat,lon" form goes straight to the radius API params; otherwise
     // we'd need to geocode here (deferred until radius UI is enabled).
@@ -119,7 +125,10 @@ function IntelligencePageInner() {
   const [total, setTotal] = useState(0)
   const [pages, setPages] = useState(1)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Loading defaults to false. We only flip it on when a state filter is
+  // present and a fetch actually fires — without a state we render the
+  // "Select a state" prompt instead of a spinner forever.
+  const [loading, setLoading] = useState(!!initialFilters.state)
   const [error, setError] = useState<string | null>(null)
 
   const [detailProperty, setDetailProperty] = useState<Property | null>(null)
@@ -169,9 +178,28 @@ function IntelligencePageInner() {
     }
   }, [])
 
-  // Initial + every-time-filter-or-page-changes fetch
+  // Initial + every-time-filter-or-page-changes fetch.
+  //
+  // Hard requirement: a state filter MUST be present before we fire the
+  // /api/intelligence/properties call. Without it the API hits the
+  // unfiltered 1.1M-row code path which times out on the planner-budget
+  // we operate under. The UI shows the "Select a state" prompt below
+  // until the user (or a URL param) provides one.
   const propertyTypesKey = filters.propertyTypes.join(",")
   useEffect(() => {
+    if (!filters.state) {
+      // Reset result-y state so leftovers from a prior search don't
+      // bleed through into the empty-state view.
+      setLoading(false)
+      setProperties([])
+      setStats(null)
+      setTotal(0)
+      setPages(1)
+      setLastUpdated(null)
+      setError(null)
+      syncUrl(filters, page)
+      return
+    }
     fetchData(filters, page)
     syncUrl(filters, page)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,6 +214,8 @@ function IntelligencePageInner() {
     filters.portfolioMatch,
     filters.minYear,
     filters.maxYear,
+    filters.minValue,
+    filters.maxValue,
     filters.nearAddress,
     filters.radiusMiles,
     page,
@@ -208,6 +238,8 @@ function IntelligencePageInner() {
       portfolioMatch: "all",
       minYear: "",
       maxYear: "",
+      minValue: "",
+      maxValue: "",
       nearAddress: "",
       radiusMiles: DEFAULT_RADIUS_MILES,
     }
@@ -233,6 +265,7 @@ function IntelligencePageInner() {
           onApply={handleApply}
           onSearchChange={handleSearchChange}
           onClear={handleClear}
+          stateRequired
         />
 
         <main className="flex-1 overflow-y-auto px-6 py-5">
@@ -241,6 +274,12 @@ function IntelligencePageInner() {
             perPage={PER_PAGE}
             total={total}
             loading={loading}
+            stateSelected={!!filters.state}
+            exportHref={
+              filters.state
+                ? `/api/intelligence/properties/export?${filtersToApiParams(filters, 1).toString()}`
+                : null
+            }
           />
 
           {error && (
@@ -249,7 +288,9 @@ function IntelligencePageInner() {
             </div>
           )}
 
-          {loading && properties.length === 0 ? (
+          {!filters.state ? (
+            <SelectStatePrompt />
+          ) : loading && properties.length === 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: PER_PAGE }).map((_, i) => (
                 <PropertyCardSkeleton key={i} />
@@ -298,16 +339,24 @@ function ResultsHeader({
   perPage,
   total,
   loading,
+  stateSelected,
+  exportHref,
 }: {
   page: number
   perPage: number
   total: number
   loading: boolean
+  stateSelected: boolean
+  exportHref: string | null
 }) {
   if (total === 0) {
     return (
       <div className="mb-4 text-[11px] uppercase tracking-widest text-[var(--intel-text-muted)]">
-        {loading ? "loading properties…" : "no results"}
+        {!stateSelected
+          ? "select a state to begin"
+          : loading
+            ? "loading properties…"
+            : "no results"}
       </div>
     )
   }
@@ -326,8 +375,19 @@ function ResultsHeader({
         </span>{" "}
         properties
       </div>
-      <div className="text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
-        sorted by building size
+      <div className="flex items-baseline gap-4">
+        {exportHref && (
+          <a
+            href={exportHref}
+            className="rounded-md border border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)] px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--intel-accent)] transition-colors hover:bg-[var(--intel-accent)] hover:text-[var(--intel-bg)]"
+            title="Download up to 10,000 matching properties as CSV"
+          >
+            ↓ export csv
+          </a>
+        )}
+        <div className="text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
+          sorted by building size
+        </div>
       </div>
     </div>
   )
@@ -404,6 +464,25 @@ function PaginationBtn({
     >
       {children}
     </button>
+  )
+}
+
+function SelectStatePrompt() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[var(--intel-border)] bg-[var(--intel-bg-elev)] py-24">
+      <div className="text-[var(--intel-text-dim)]">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+      </div>
+      <div className="mt-3 text-[14px] font-medium text-[var(--intel-text)]">
+        Select a state to begin browsing properties
+      </div>
+      <div className="mt-1 max-w-sm text-center text-[12px] text-[var(--intel-text-muted)]">
+        We hold ~1.1M commercial property records across the country — pick a state on the left to scope your search.
+      </div>
+    </div>
   )
 }
 

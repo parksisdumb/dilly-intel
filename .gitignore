@@ -51,5 +51,21 @@ progress.json
 progress_*.json
 geocoder_progress.json
 
+# shapefile artifacts — these belong on external storage
+# (D:\DillyIntel\... on the workstation; cloud storage in CI).
+# Even small subsets crash Turbopack's file-watcher.
+/maris_data/
+/txgio_data/
+/shapefiles/
+*.shp
+*.dbf
+*.shx
+*.prj
+*.sbn
+*.sbx
+*.cpg
+*.shp.xml
+*.zip
+
 # claude local settings
 .claude/settings.local.json

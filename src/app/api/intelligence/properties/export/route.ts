@@ -9,8 +9,16 @@ export const dynamic = "force-dynamic"
 // not "dump the whole national database" — keep it reasonable.
 const EXPORT_CAP = 10_000
 
-// Same source list and column projection as the main /properties route.
-// Keep these in sync if the main route's universe changes.
+// Source list for CSV export. Keep in sync with the main /properties
+// route when its universe changes.
+//
+// NOTE: this list is intentionally NOT identical to the main route's
+// PROPERTY_SOURCES — it additionally carries cook_county_il_public /
+// oh_* / ga_fulton_public, which predate the market-index work and are
+// not in intel_market_sources() or the partial-index predicates. Export
+// therefore does not get index coverage for those extra sources (it is
+// capped at 10k rows, so the seq-scan cost is bounded). Reconciling this
+// divergence is tracked separately.
 const PROPERTY_SOURCES = [
   "proptracer_mapping",
   "fl_dor_public",
@@ -18,6 +26,12 @@ const PROPERTY_SOURCES = [
   "tx_cad_dcad",
   "tx_cad_tad",
   "tx_cad_hcad",
+  // Added 2026-05-15 — MS MARIS + TX TxGIO ingests.
+  "ms_maris_public",
+  "tx_txgio_harris",
+  "tx_txgio_bexar",
+  "tx_txgio_travis",
+  "tx_txgio_public",
   "cook_county_il_public",
   "oh_cuyahoga_public",
   "oh_franklin_public",

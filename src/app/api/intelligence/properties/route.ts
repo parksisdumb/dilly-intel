@@ -24,6 +24,15 @@ const PROPERTY_SOURCES = [
   "tx_cad_dcad",
   "tx_cad_tad",
   "tx_cad_hcad",
+  // Added 2026-05-15 — MS MARIS + TX TxGIO ingests (~160k rows). Must
+  // stay in sync with intel_market_sources() and the market partial-
+  // index predicates (migration 20260515000001) — a query whose source
+  // set is wider than an index's predicate cannot use that index.
+  "ms_maris_public",
+  "tx_txgio_harris",
+  "tx_txgio_bexar",
+  "tx_txgio_travis",
+  "tx_txgio_public",
 ]
 
 const PER_PAGE_DEFAULT = 24

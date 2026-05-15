@@ -25,12 +25,14 @@ from .property_codes import (
     classify_oh_luc,
     classify_ga_lucode,
     classify_mo_class,
+    classify_ms_cama,
     is_commercial_tx,
     is_commercial_fl,
     is_commercial_nc,
     is_commercial_oh,
     is_commercial_ga,
     is_commercial_mo,
+    is_commercial_ms,
 )
 
 __all__ = [
@@ -46,10 +48,12 @@ __all__ = [
     "classify_oh_luc",
     "classify_ga_lucode",
     "classify_mo_class",
+    "classify_ms_cama",
     "is_commercial_tx",
     "is_commercial_fl",
     "is_commercial_nc",
     "is_commercial_oh",
     "is_commercial_ga",
     "is_commercial_mo",
+    "is_commercial_ms",
 ]

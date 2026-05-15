@@ -91,7 +91,10 @@ function MarketPageInner() {
     (searchParams.get("hide_gov") ?? "true").toLowerCase() !== "false"
   )
   const [data, setData] = useState<MarketResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Loading starts true only when a state is already in the URL. With no
+  // state we render the "Select a state" gate instead of a spinner — and
+  // crucially fire zero API calls (see the fetch effect below).
+  const [loading, setLoading] = useState(!!(searchParams.get("state") || ""))
   const [error, setError] = useState<string | null>(null)
 
   // Portfolios are loaded from a separate endpoint — heaviest GROUP BY
@@ -172,6 +175,22 @@ function MarketPageInner() {
   useEffect(() => {
     if (debounceRef.current != null) window.clearTimeout(debounceRef.current)
     debounceRef.current = window.setTimeout(() => {
+      // Hard requirement: a state MUST be selected before we hit either
+      // endpoint. An unfiltered market query scans all ~1.1M rows and
+      // trips "canceling statement due to statement timeout". With no
+      // state we fire NOTHING — reset result state so a prior search
+      // doesn't bleed through, sync the URL, and let the render show
+      // the "Select a state" gate.
+      if (!state) {
+        setLoading(false)
+        setError(null)
+        setData(null)
+        setPortfolios([])
+        setPortfoliosLoading(false)
+        setPortfoliosError(null)
+        syncUrl(search, state, hideGov)
+        return
+      }
       // Fire both in parallel — they're independent endpoints. The
       // page renders progressively as each lands.
       fetchData(search, state, hideGov)
@@ -202,44 +221,53 @@ function MarketPageInner() {
           </div>
         )}
 
-        {/* Top KPI strip */}
-        <KpiStrip data={data} loading={loading} />
+        {/* State gate: with no state selected we render NOTHING that
+            triggers a database query — no KPIs, charts, owner tables, or
+            portfolio section. An unfiltered market query times out. */}
+        {!state ? (
+          <SelectStatePrompt />
+        ) : (
+          <>
+            {/* Top KPI strip */}
+            <KpiStrip data={data} loading={loading} />
 
-        {/* Type breakdown + ownership split */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <TypeBreakdown data={data} loading={loading} />
-          <OwnershipPanel data={data} loading={loading} />
-        </div>
+            {/* Type breakdown + ownership split */}
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <TypeBreakdown data={data} loading={loading} />
+              <OwnershipPanel data={data} loading={loading} />
+            </div>
 
-        {/* Concentration headline */}
-        <ConcentrationHeadline data={data} loading={loading} />
+            {/* Concentration headline */}
+            <ConcentrationHeadline data={data} loading={loading} />
 
-        {/* Owner rankings */}
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
-          <OwnerTable
-            title="Top 20 owners by property count"
-            owners={data?.top_owners_by_count ?? []}
-            metric="count"
-            loading={loading}
-          />
-          <OwnerTable
-            title="Top 20 owners by total sqft"
-            owners={data?.top_owners_by_sqft ?? []}
-            metric="sqft"
-            loading={loading}
-          />
-        </div>
+            {/* Owner rankings */}
+            <div className="mt-6 grid gap-6 xl:grid-cols-2">
+              <OwnerTable
+                title="Top 20 owners by property count"
+                owners={data?.top_owners_by_count ?? []}
+                metric="count"
+                loading={loading}
+              />
+              <OwnerTable
+                title="Top 20 owners by total sqft"
+                owners={data?.top_owners_by_sqft ?? []}
+                metric="sqft"
+                loading={loading}
+              />
+            </div>
 
-        {/* Portfolio owners — shared mailing address. Loaded from a
-           separate endpoint so its slow GROUP BY doesn't block the
-           rest of the dashboard. */}
-        <div className="mt-6">
-          <PortfolioTable
-            portfolios={portfolios}
-            loading={portfoliosLoading}
-            error={portfoliosError}
-          />
-        </div>
+            {/* Portfolio owners — shared mailing address. Loaded from a
+               separate endpoint so its slow GROUP BY doesn't block the
+               rest of the dashboard. */}
+            <div className="mt-6">
+              <PortfolioTable
+                portfolios={portfolios}
+                loading={portfoliosLoading}
+                error={portfoliosError}
+              />
+            </div>
+          </>
+        )}
 
         <Footer />
       </main>
@@ -312,12 +340,15 @@ function FilterBar({
           placeholder="city, zip code, or county"
           className="w-64 rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-1.5 text-[13px] text-[var(--intel-text)] placeholder-[var(--intel-text-dim)] outline-none focus:border-[var(--intel-accent-border)]"
         />
+        {/* No "All states" option — an unfiltered market query scans
+            ~1.1M rows and trips the statement timeout. The empty value
+            is a disabled placeholder only; the user must pick a state. */}
         <select
           value={state}
           onChange={(e) => onState(e.target.value)}
           className="rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-1.5 text-[13px] text-[var(--intel-text)] outline-none focus:border-[var(--intel-accent-border)]"
         >
-          <option value="">All states</option>
+          <option value="" disabled>Select a state</option>
           {US_STATES.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
@@ -938,6 +969,28 @@ function Empty() {
   return (
     <div className="py-8 text-center text-[12px] text-[var(--intel-text-muted)]">
       No data for this market.
+    </div>
+  )
+}
+
+// Shown when no state is selected. The dashboard fires zero API calls in
+// this state — an unfiltered market query times out against the full
+// ~1.1M-row table, so we gate every query behind a state selection.
+function SelectStatePrompt() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[var(--intel-border)] bg-[var(--intel-bg-elev)] py-24">
+      <div className="text-[var(--intel-text-dim)]">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+      </div>
+      <div className="mt-3 text-[14px] font-medium text-[var(--intel-text)]">
+        Select a state to view market intelligence
+      </div>
+      <div className="mt-1 max-w-sm text-center text-[12px] text-[var(--intel-text-muted)]">
+        Pick a state in the dropdown above to load KPIs, ownership breakdowns, and portfolio concentration for that market.
+      </div>
     </div>
   )
 }

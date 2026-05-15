@@ -69,6 +69,16 @@ export async function GET(req: NextRequest) {
   const county = sp.get("county")?.trim() || parsed.county
   const state = sp.get("state")?.trim().toUpperCase() || null
 
+  // Safety net for the frontend state gate. The mailing-address GROUP BY
+  // is the heaviest query in the dashboard — an unfiltered run trips the
+  // statement timeout, so bail out before the RPC call.
+  if (!state) {
+    return NextResponse.json(
+      { error: "State parameter required" },
+      { status: 400 }
+    )
+  }
+
   const hideGov = (sp.get("hide_gov") ?? "true").toLowerCase() !== "false"
 
   const db = createAdminClient()

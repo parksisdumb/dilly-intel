@@ -13,6 +13,8 @@ sources without a translation layer.
 """
 from __future__ import annotations
 
+import re
+
 # Bucket names — keep aligned with the /intelligence page's filter
 # checkbox set so cross-source filtering works.
 COMMERCIAL_BUCKETS = {
@@ -561,6 +563,254 @@ def classify_mo_class(code) -> tuple[str, str, bool]:
 
 def is_commercial_mo(code) -> bool:
     return classify_mo_class(code)[2]
+
+
+
+# -------------------------------------------------------------------------
+# Mississippi — MARIS Cadastral Framework.
+#
+# Two-pass investigation (2026-05-12) confirmed that the published
+# MARIS schema does NOT carry a usable property-class code. The `CAMA`
+# field that the metadata advertises as the classifier is actually the
+# software-vendor name (only two values across 2M rows). And `CLASSDESC`
+# / `USEDESC` are missing.
+#
+# We therefore classify by a multi-signal heuristic instead:
+#
+#   Tier 1 (definite): ZONING starts with C/B/I.
+#     C* → retail (broad commercial)
+#     B* → office (business/professional)
+#     I* → industrial
+#     ZONING population is sparse (~2% on West, 0 on East) but the
+#     codes are crisp where present.
+#
+#   Tier 2 (likely): OWNNAME matches a corporate suffix
+#                    AND IMPVAL1+IMPVAL2 >= $100k
+#                    AND OWNNAME does NOT match the
+#                    timber/farm/church/etc anti-pattern.
+#     The $100k IMPVAL threshold filters out small barns/sheds on
+#     corp-owned rural land (the main source of false positives), and
+#     the anti-pattern set drops the timber and ag holding companies
+#     that dominate corp-suffix matches in rural MS.
+#
+#   Tier 3: skip (returns is_commercial=False).
+#
+# Legacy code/desc logic remains in place as a fallback for non-MARIS
+# callers that may still pass a class code + description.
+# -------------------------------------------------------------------------
+
+
+# Corporate-suffix detector for the MS tier-2 path. Same set as the
+# analyzer + same word-boundary rules so the runtime classifier sees the
+# same hits the analyzer saw.
+_MS_CORP_SUFFIX_RE = re.compile(
+    r"\b("
+    r"LLC|L\.L\.C\.?|"
+    r"INC|INCORPORATED|"
+    r"CORP|CORPORATION|"
+    r"LP|L\.P\.?|"
+    r"LLP|L\.L\.P\.?|"
+    r"REIT|TRUST|"
+    r"HOLDINGS|"
+    r"PROPERTIES|PROPERTY|"
+    r"PARTNERS|PARTNERSHIP|"
+    r"ASSOCIATES|ASSOCIATION|ASSOC|"
+    r"CAPITAL|"
+    r"INVESTMENTS|INVESTMENT|"
+    r"MANAGEMENT|"
+    r"DEVELOPMENT|"
+    r"ENTERPRISES|ENTERPRISE|"
+    r"GROUP|VENTURES|"
+    r"REALTY|"
+    r"COMPANY|CO|"
+    r"FOUNDATION"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# Anti-pattern: corp-named owners that are NOT commercial real estate —
+# timber/farm/ranch holdings, churches, cemeteries, public-service
+# districts, school boards. Matched anywhere in the name; \b on both
+# ends means "TREEFARM" matches but "FARMSTEAD" doesn't.
+_MS_ANTI_PATTERN_RE = re.compile(
+    r"\b("
+    r"TIMBER|"
+    r"TREE\s+FARM|TREEFARM|"
+    r"LAND\s+COMPANY|LAND\s+CO|"
+    r"FARMS|FARMING|"
+    r"RANCH|RANCHING|"
+    r"CATTLE|LIVESTOCK|"
+    r"HUNTING|HUNT\s+CLUB|"
+    r"FORESTRY|"
+    r"CHURCH|BAPTIST|METHODIST|"
+    r"CEMETERY|"
+    r"SCHOOL\s+DISTRICT|BOARD\s+OF\s+EDUCATION|"
+    r"HOUSING\s+AUTHORITY|"
+    r"WATER\s+DISTRICT|FIRE\s+DISTRICT|UTILITY\s+DISTRICT"
+    r")\b",
+    re.IGNORECASE,
+)
+
+MS_IMPVAL_THRESHOLD = 100_000  # Tier-2 minimum building-improvements value
+
+
+
+_MS_DESC_COMMERCIAL_KEYWORDS = [
+    ("multifamily", "multifamily", "Multifamily"),
+    ("multi-family", "multifamily", "Multifamily"),
+    ("apartment", "multifamily", "Apartment"),
+    ("apt ", "multifamily", "Apartment"),
+    ("storage", "self_storage", "Self storage"),
+    ("warehouse", "industrial", "Warehouse"),
+    ("manufact", "industrial", "Manufacturing"),
+    ("factory", "industrial", "Factory"),
+    ("industrial", "industrial", "Industrial"),
+    ("hotel", "hospitality", "Hospitality"),
+    ("motel", "hospitality", "Hospitality"),
+    ("lodging", "hospitality", "Hospitality"),
+    ("medical", "healthcare", "Healthcare"),
+    ("hospital", "healthcare", "Healthcare"),
+    ("clinic", "healthcare", "Healthcare"),
+    ("nursing", "healthcare", "Healthcare"),
+    ("dialysis", "healthcare", "Healthcare"),
+    ("office", "office", "Office"),
+    ("retail", "retail", "Retail"),
+    ("shop", "retail", "Retail"),
+    ("store", "retail", "Retail"),
+    ("restaurant", "retail", "Restaurant"),
+    ("commercial", "other_commercial", "Commercial"),
+]
+
+_MS_DESC_RESIDENTIAL_KEYWORDS = (
+    "single family",
+    "single-family",
+    "residential",
+    "homestead",
+    "vacant residential",
+)
+
+_MS_DESC_DROP_KEYWORDS = (
+    "vacant",
+    "exempt",
+    "tax-exempt",
+    "agricultural",
+    "ag land",
+    "timber",
+    "cropland",
+    "pasture",
+    "mineral",
+    "right of way",
+    "right-of-way",
+    "easement",
+)
+
+# Common short codes seen across MS county CAMAs.
+_MS_CODE_BUCKETS = {
+    "COM": ("other_commercial", "Commercial"),
+    "COML": ("other_commercial", "Commercial"),
+    "COMM": ("other_commercial", "Commercial"),
+    "C": ("other_commercial", "Commercial"),
+    "IND": ("industrial", "Industrial"),
+    "INDUS": ("industrial", "Industrial"),
+    "I": ("industrial", "Industrial"),
+    "MFR": ("multifamily", "Multifamily"),
+    "APT": ("multifamily", "Apartment"),
+    "RES": ("residential", "Residential"),
+    "RESI": ("residential", "Residential"),
+    "R": ("residential", "Residential"),
+    "AGR": ("agricultural", "Agricultural"),
+    "AG": ("agricultural", "Agricultural"),
+    "VAC": ("vacant", "Vacant"),
+    "EXM": ("other_commercial", "Exempt"),
+    "EX": ("other_commercial", "Exempt"),
+}
+
+
+def classify_ms_cama(
+    code: str | None = None,
+    desc: str | None = None,
+    *,
+    owner: str | None = None,
+    zoning: str | None = None,
+    imp_val: float | int | None = None,
+    imp_val_threshold: float = MS_IMPVAL_THRESHOLD,
+) -> tuple[str, str, bool]:
+    """
+    Multi-signal Mississippi MARIS classifier.
+
+    Returns (bucket, description, is_commercial). Designed for the
+    mississippi_maris_scraper, which feeds every record through this
+    and skips rows where is_commercial=False.
+
+    Decision order:
+      Tier 1 — ZONING prefix C/B/I wins outright.
+      Tier 2 — corp-suffix owner + IMPVAL ≥ threshold + no anti-pattern.
+      Tier 3 — legacy code/desc fallback for non-MARIS callers.
+    """
+    # ── Tier 1: ZONING prefix ─────────────────────────────────────────
+    if zoning:
+        z = zoning.strip().upper()
+        if z:
+            head = z[0]
+            if head == "C":
+                return ("retail", f"Commercial zoning ({z})", True)
+            if head == "B":
+                return ("office", f"Business zoning ({z})", True)
+            if head == "I":
+                return ("industrial", f"Industrial zoning ({z})", True)
+
+    # ── Tier 2: corp suffix + IMPVAL + no anti-pattern ────────────────
+    if owner and imp_val is not None:
+        try:
+            iv = float(imp_val)
+        except (TypeError, ValueError):
+            iv = 0.0
+        if iv >= imp_val_threshold:
+            if _MS_CORP_SUFFIX_RE.search(owner) and not _MS_ANTI_PATTERN_RE.search(owner):
+                return (
+                    "other_commercial",
+                    f"Corp owner + IMPVAL ${iv:,.0f}",
+                    True,
+                )
+
+    # ── Tier 3: legacy code/desc fallback (non-MARIS callers) ─────────
+    desc_u = (desc or "").strip().upper()
+    code_u = (code or "").strip().upper()
+
+    if desc_u:
+        for kw, bucket, label in _MS_DESC_COMMERCIAL_KEYWORDS:
+            if kw.upper() in desc_u:
+                return (bucket, f"{label} ({desc_u})", True)
+        for kw in _MS_DESC_RESIDENTIAL_KEYWORDS:
+            if kw.upper() in desc_u:
+                return ("residential", desc_u, False)
+        for kw in _MS_DESC_DROP_KEYWORDS:
+            if kw.upper() in desc_u:
+                return ("vacant", desc_u, False)
+
+    if code_u in _MS_CODE_BUCKETS:
+        bucket, label = _MS_CODE_BUCKETS[code_u]
+        return (bucket, f"{label} ({code_u})", bucket in COMMERCIAL_BUCKETS)
+
+    digits = "".join(c for c in code_u if c.isdigit())
+    if digits:
+        head = digits[0]
+        if head == "1":
+            return ("residential", f"MS code {code_u}", False)
+        if head == "2":
+            return ("agricultural", f"MS code {code_u}", False)
+        if head == "3":
+            return ("other_commercial", f"MS commercial ({code_u})", True)
+        if head == "4":
+            return ("industrial", f"MS industrial ({code_u})", True)
+        if head == "5":
+            return ("other_commercial", f"MS utility/special ({code_u})", True)
+
+    return ("unknown", f"MS code {code_u or '(empty)'}", False)
+
+
+def is_commercial_ms(code: str | None, desc: str | None = None) -> bool:
+    return classify_ms_cama(code, desc)[2]
 
 
 def classify_ar_parceltype(parceltype: str | None) -> tuple[str, str, bool]:

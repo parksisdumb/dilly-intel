@@ -226,6 +226,16 @@ export async function GET(req: NextRequest) {
   const county = sp.get("county")?.trim() || parsed.county
   const state = sp.get("state")?.trim().toUpperCase() || null
 
+  // Safety net for the frontend state gate. An unfiltered market query
+  // scans the full ~1.1M-row table and trips the statement timeout, so
+  // we never let one reach the database — bail out before any RPC call.
+  if (!state) {
+    return NextResponse.json(
+      { error: "State parameter required" },
+      { status: 400 }
+    )
+  }
+
   // Hide-government toggle. Default ON to match the UI default.
   // The summary RPC ignores this flag (property-level counts are
   // unaffected by owner filtering); only owners + concentration use it.

@@ -37,7 +37,7 @@ import argparse
 import json
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import requests
@@ -49,6 +49,7 @@ from intel_ingest import (
     classify_oh_luc,
     classify_ga_lucode,
     classify_mo_class,
+    classify_tx_state_class,
 )
 
 ROOT = Path(__file__).parent
@@ -75,6 +76,13 @@ class StateConfig:
     where: str = "1=1"
     progress_file: Path = Path()  # populated post-init
     fips_prefix: str = ""  # 2-digit state FIPS for county_fips assembly
+    # ArcGIS REST geometry options. Some sources (TxGIO statewide
+    # parcels) don't ship pre-computed lat/lon columns — we have to
+    # extract the polygon centroid from the returned geometry. When
+    # enabled, fetch_page() requests geometry and asks for it in
+    # `out_sr` (typically EPSG:4326 for direct WGS84 lat/lon).
+    return_geometry: bool = False
+    out_sr: int | None = None
 
 
 # Arkansas Planning_Cadastre — layer 6 = PARCEL_POLYGON_CAMP
@@ -166,6 +174,95 @@ STATE_PRESETS: dict[str, StateConfig] = {
     # or use a non-statutory class-code system that defies our standard
     # commercial filter (St Louis: no PCC >= 30 found in 135k rows even
     # though the docs suggest 30-49 = commercial). See SCRAPER_TODO.md.
+
+    # Texas TxGIO statewide parcel MapServer. Same endpoint for every
+    # county — we filter by FIPS server-side and let the existing TX
+    # PTAD classifier (classify_tx_state_class) bucket the results.
+    # The where clause also pre-filters to commercial-prefix codes
+    # (F* / B* / L* / J*) so the 1.5M-row Harris scan only ships ~89k
+    # candidate records over the wire. Geometry is requested in
+    # EPSG:4326 so polygon centroids come back as ready-to-use
+    # WGS84 lat/lon.
+    "tx_txgio_harris": StateConfig(
+        state="Texas - Harris County (TxGIO)",
+        state_abbr="TX-TXGIO-HRS",
+        endpoint=(
+            "https://feature.geographic.texas.gov/arcgis/rest/services/"
+            "Parcels/stratmap_land_parcels_48_most_recent/MapServer/0"
+        ),
+        source_detail="tx_txgio_harris",
+        # 500 (not the 2000 service max): with returnGeometry=true the
+        # per-page payload at 2000 features is heavy enough that the
+        # TxGIO gateway intermittently 504s. Smaller pages clear it.
+        page_size=500,
+        field_map={},  # custom mapper handles field layout
+        use_code_field="stat_land_use",
+        classifier="tx_state_class",
+        where=(
+            "FIPS = '48201' AND ("
+            "STAT_LAND_USE LIKE 'F%' OR "
+            "STAT_LAND_USE LIKE 'B%' OR "
+            "STAT_LAND_USE LIKE 'L%' OR "
+            "STAT_LAND_USE LIKE 'J%')"
+        ),
+        progress_file=ROOT / "progress_tx_txgio_harris.json",
+        fips_prefix="48",
+        return_geometry=True,
+        out_sr=4326,
+    ),
+    "tx_txgio_bexar": StateConfig(
+        state="Texas - Bexar County (TxGIO)",
+        state_abbr="TX-TXGIO-BXR",
+        endpoint=(
+            "https://feature.geographic.texas.gov/arcgis/rest/services/"
+            "Parcels/stratmap_land_parcels_48_most_recent/MapServer/0"
+        ),
+        source_detail="tx_txgio_bexar",
+        page_size=500,  # see Harris note — geometry payloads at 2000 trip 504s
+        field_map={},
+        use_code_field="stat_land_use",
+        classifier="tx_state_class",
+        where=(
+            "FIPS = '48029' AND ("
+            "STAT_LAND_USE LIKE 'F%' OR "
+            "STAT_LAND_USE LIKE 'B%' OR "
+            "STAT_LAND_USE LIKE 'L%' OR "
+            "STAT_LAND_USE LIKE 'J%')"
+        ),
+        progress_file=ROOT / "progress_tx_txgio_bexar.json",
+        fips_prefix="48",
+        return_geometry=True,
+        out_sr=4326,
+    ),
+    # Travis: STAT_LAND_USE is empty across all 834k Travis CAD records
+    # in the TxGIO normalized layer (verified 2026-05-12). The where
+    # clause therefore returns 0 rows; the preset is wired in for
+    # backward-compat / discoverability. TODO: switch to LOC_LAND_USE
+    # or pull Travis from traviscad.org directly (see SCRAPER_TODO.md).
+    "tx_txgio_travis": StateConfig(
+        state="Texas - Travis County (TxGIO — known-empty class field)",
+        state_abbr="TX-TXGIO-TRV",
+        endpoint=(
+            "https://feature.geographic.texas.gov/arcgis/rest/services/"
+            "Parcels/stratmap_land_parcels_48_most_recent/MapServer/0"
+        ),
+        source_detail="tx_txgio_travis",
+        page_size=500,  # see Harris note
+        field_map={},
+        use_code_field="stat_land_use",
+        classifier="tx_state_class",
+        where=(
+            "FIPS = '48453' AND ("
+            "STAT_LAND_USE LIKE 'F%' OR "
+            "STAT_LAND_USE LIKE 'B%' OR "
+            "STAT_LAND_USE LIKE 'L%' OR "
+            "STAT_LAND_USE LIKE 'J%')"
+        ),
+        progress_file=ROOT / "progress_tx_txgio_travis.json",
+        fips_prefix="48",
+        return_geometry=True,
+        out_sr=4326,
+    ),
 }
 
 
@@ -497,6 +594,150 @@ def _unused_map_mo_stlouis_city_feature(attr: dict) -> dict | None:  # noqa: F84
     }
 
 
+def _txgio_polygon_centroid(geometry: dict | None) -> tuple[float, float] | None:
+    """Mean of all vertex coordinates across all rings of an ArcGIS
+    polygon. ArcGIS returns geometry as {"rings": [[[x,y],[x,y],...]]}.
+    When the layer was queried with outSR=4326 the values are already
+    WGS84 lon/lat — no reprojection needed.
+
+    Returns (lat, lon) tuple, or None when geometry is missing/empty.
+    """
+    if not geometry:
+        return None
+    rings = geometry.get("rings") or []
+    sx = sy = 0.0
+    n = 0
+    for ring in rings:
+        for pt in ring:
+            if pt is None or len(pt) < 2:
+                continue
+            try:
+                sx += float(pt[0])
+                sy += float(pt[1])
+                n += 1
+            except (TypeError, ValueError):
+                continue
+    if n == 0:
+        return None
+    return (sy / n, sx / n)  # lat, lon (ArcGIS rings are [x, y] = [lon, lat])
+
+
+def map_tx_txgio_feature(
+    attr: dict,
+    geometry: dict | None,
+    source_detail: str,
+) -> dict | None:
+    """
+    Texas TxGIO statewide parcel mapper.
+
+    ArcGIS REST returns attribute keys lowercased (field name, not the
+    uppercase alias), so we read lowercase here. STAT_LAND_USE is the
+    Texas PTAD code system — same one HCAD/DCAD/TAD use — so the
+    existing classify_tx_state_class() is the classifier.
+
+    Source detail is parameterized so the same mapper serves all three
+    per-county presets (tx_txgio_harris / _bexar / _travis).
+    """
+    prop_id = _str(attr.get("prop_id"))
+    geo_id = _str(attr.get("geo_id"))
+    ext_id = prop_id or geo_id
+    if not ext_id:
+        return None
+    # Whitespace in TX PROP_IDs is real; normalize for external_id while
+    # preserving the raw value on apn/parcel_id.
+    ext_id_clean = "_".join(ext_id.split())
+
+    # Classification — STAT_LAND_USE wins; LOC_LAND_USE is the local
+    # county code as a fallback (county-specific, less reliable).
+    stat_code = _str(attr.get("stat_land_use"))
+    loc_code = _str(attr.get("loc_land_use"))
+    bucket, desc, is_comm = classify_tx_state_class(stat_code or loc_code)
+    if not is_comm:
+        return None
+
+    # Site address — prefer the assembled SITUS_ADDR; fall back to
+    # piecing the components together.
+    street = _str(attr.get("situs_addr"))
+    if not street:
+        parts = [
+            _str(attr.get("situs_num")),
+            _str(attr.get("situs_stre")),
+            _str(attr.get("situs_st_1")),
+            _str(attr.get("situs_st_2")),
+        ]
+        parts = [p for p in parts if p]
+        street = " ".join(parts) if parts else None
+    if not street:
+        return None
+
+    city = _str(attr.get("situs_city"))
+    if not city:
+        return None
+
+    state = _str(attr.get("situs_stat")) or "TX"
+    zip_code = _str(attr.get("situs_zip"))
+
+    mail_addr = _str(attr.get("mail_addr")) or _str(attr.get("mail_line1"))
+    mail_city = _str(attr.get("mail_city"))
+    mail_state = _str(attr.get("mail_stat"))
+    mail_zip = _str(attr.get("mail_zip"))
+
+    owner = _str(attr.get("owner_name"))
+
+    fips = _str(attr.get("fips"))
+    county = _str(attr.get("county"))
+
+    mkt_value = _normalize_float(attr.get("mkt_value"))
+    mkt_value_int = _normalize_int(attr.get("mkt_value"))
+    imp_value = _normalize_float(attr.get("imp_value"))
+    year_built = _normalize_int(attr.get("year_built"))
+
+    # Centroid from polygon rings (already WGS84 due to outSR=4326).
+    lat: float | None = None
+    lon: float | None = None
+    centroid = _txgio_polygon_centroid(geometry)
+    if centroid is not None:
+        lat_c, lon_c = centroid
+        # Sanity-gate to Texas bounding box — anything outside means
+        # the SR transform broke or the polygon is corrupt.
+        if 25.0 <= lat_c <= 37.0 and -107.0 <= lon_c <= -93.0:
+            lat, lon = lat_c, lon_c
+
+    # Annotate the use-desc with imp_value for reviewer context — same
+    # convention as the MARIS mapper.
+    desc_decorated = desc
+    if imp_value and imp_value > 0:
+        desc_decorated = f"{desc} | IMP_VALUE ${imp_value:,.0f}"
+
+    return {
+        "external_id": f"TX-TXGIO-{ext_id_clean}",
+        "source_detail": source_detail,
+        "street_address": street,
+        "city": city,
+        "state": state,
+        "postal_code": (zip_code or "")[:10] or None,
+        "county_fips": fips if fips and len(fips) == 5 else None,
+        "county": county.title() if county else None,
+        "owner_name": owner,
+        "raw_owner_name": owner,
+        "owner_mailing_address": mail_addr,
+        "owner_mailing_city": mail_city,
+        "owner_mailing_state": mail_state,
+        "owner_mailing_zip": mail_zip,
+        "property_type": bucket,
+        "property_use_code": stat_code or loc_code,
+        "property_use_desc": desc_decorated,
+        "building_sqft": None,  # not in TxGIO schema
+        "year_built": year_built,
+        "estimated_value": mkt_value,
+        "assessed_value": mkt_value_int,
+        "latitude": lat,
+        "longitude": lon,
+        "apn": ext_id,
+        "parcel_id": ext_id,
+    }
+
+
 def map_ga_fulton_feature(attr: dict) -> dict | None:
     """Fulton County (Atlanta), GA parcel mapper.
     No bldg sqft / city in source — bldgsf left NULL, city defaulted
@@ -599,17 +840,24 @@ def fetch_page(
     where: str,
     offset: int,
     page_size: int,
+    return_geometry: bool = False,
+    out_sr: int | None = None,
 ) -> dict:
     url = endpoint.rstrip("/") + "/query"
-    params = {
+    params: dict[str, str | int] = {
         "where": where,
         "outFields": "*",
-        "returnGeometry": "false",
+        "returnGeometry": "true" if return_geometry else "false",
         "f": "json",
         "resultOffset": offset,
         "resultRecordCount": page_size,
         "orderByFields": "OBJECTID ASC",
     }
+    if return_geometry and out_sr is not None:
+        # Ask the service to project geometry to the SR we want
+        # (EPSG:4326 for WGS84 lat/lon) — saves us a client-side
+        # reprojection step.
+        params["outSR"] = out_sr
     r = session.get(url, params=params, timeout=HTTP_TIMEOUT)
     r.raise_for_status()
     return r.json()
@@ -629,7 +877,10 @@ def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
         progress["last_offset"] = 0
         progress.save()
 
-    upserter = SupabaseUpserter(source_detail=cfg.source_detail)
+    # TxGIO doesn't publish building_sqft, so the upserter would always
+    # see NULL and the min-sqft gate is moot. Disable it explicitly.
+    enforce_sqft_min = not cfg.state_abbr.startswith("TX-TXGIO")
+    upserter = SupabaseUpserter(source_detail=cfg.source_detail, enforce_sqft_min=enforce_sqft_min)
     session = requests.Session()
     session.headers.update({"User-Agent": "DillyIntel/1.0"})
 
@@ -643,7 +894,11 @@ def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
             break
 
         try:
-            data = fetch_page(session, cfg.endpoint, cfg.where, offset, cfg.page_size)
+            data = fetch_page(
+                session, cfg.endpoint, cfg.where, offset, cfg.page_size,
+                return_geometry=cfg.return_geometry,
+                out_sr=cfg.out_sr,
+            )
         except requests.RequestException as e:
             consecutive_errors += 1
             print(f"[{cfg.state_abbr.lower()}] page error at offset {offset}: {e}")
@@ -669,6 +924,12 @@ def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
                 payload = map_oh_franklin_feature(attr)
             elif cfg.state_abbr == "GA-FUL":
                 payload = map_ga_fulton_feature(attr)
+            elif cfg.state_abbr.startswith("TX-TXGIO"):
+                payload = map_tx_txgio_feature(
+                    attr,
+                    feat.get("geometry"),
+                    source_detail=cfg.source_detail,
+                )
             else:
                 fn = CLASSIFIERS.get(cfg.classifier)
                 if fn is None:
@@ -683,7 +944,13 @@ def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
                     fn,
                 )
             if payload is not None:
-                upserter.add(payload)
+                if args.dry_run:
+                    # Print the first 5 mapped payloads so the user can
+                    # eyeball the output without writing to Supabase.
+                    if total_kept < 5:
+                        print(f"[{cfg.state_abbr.lower()}]   sample: {payload}")
+                else:
+                    upserter.add(payload)
                 total_kept += 1
             if total_seen % LOG_INTERVAL == 0:
                 print(
@@ -746,10 +1013,22 @@ def main() -> int:
     parser.add_argument("--max-features", type=int, default=0)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--reset", action="store_true")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="apply mapper/classifier but skip the upsert; prints first 5 sample payloads")
+    parser.add_argument("--no-geometry", action="store_true",
+                        help="force returnGeometry=false even on presets that set return_geometry=True. "
+                             "Use when an ArcGIS gateway 504s on geometry-heavy pages — the records "
+                             "ingest with NULL lat/lon (backfill later via geocoder.py)")
     args = parser.parse_args()
 
     if args.state:
-        return run_state_preset(STATE_PRESETS[args.state], args)
+        cfg = STATE_PRESETS[args.state]
+        if args.no_geometry and cfg.return_geometry:
+            # Shallow-copy override so we don't mutate the shared preset.
+            cfg = replace(cfg, return_geometry=False, out_sr=None)
+            print(f"[{cfg.state_abbr.lower()}] --no-geometry: requesting attribute-only pages "
+                  f"(lat/lon will be NULL for this run)")
+        return run_state_preset(cfg, args)
     return run_custom(args)
 
 

@@ -6,9 +6,10 @@ import type { Property } from "../types"
 type Props = {
   property: Property
   onViewDetails: () => void
+  onViewPortfolio?: () => void
 }
 
-export function PropertyCard({ property, onViewDetails }: Props) {
+export function PropertyCard({ property, onViewDetails, onViewPortfolio }: Props) {
   const [imgFailed, setImgFailed] = useState(false)
   const p = property
   const hasGeo = p.latitude != null && p.longitude != null
@@ -68,14 +69,32 @@ export function PropertyCard({ property, onViewDetails }: Props) {
         </div>
 
         <div className="space-y-0.5 pt-0.5">
-          <div
-            className={`truncate text-[11px] ${
-              p.corporate_owned ? "text-[var(--intel-accent)]" : "text-[var(--intel-text-muted)]"
-            }`}
-            title={p.owner_name ?? ""}
-          >
-            {p.owner_name ?? "Unknown owner"}
-          </div>
+          {onViewPortfolio && p.owner_name ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onViewPortfolio()
+              }}
+              className={`block w-full truncate text-left text-[11px] transition-colors hover:underline ${
+                p.corporate_owned
+                  ? "text-[var(--intel-accent)] hover:text-[var(--intel-accent-hover)]"
+                  : "text-[var(--intel-text-muted)] hover:text-[var(--intel-text)]"
+              }`}
+              title={`View all properties owned by ${p.owner_name}`}
+            >
+              {p.owner_name}
+            </button>
+          ) : (
+            <div
+              className={`truncate text-[11px] ${
+                p.corporate_owned ? "text-[var(--intel-accent)]" : "text-[var(--intel-text-muted)]"
+              }`}
+              title={p.owner_name ?? ""}
+            >
+              {p.owner_name ?? "Unknown owner"}
+            </div>
+          )}
           <div className="truncate text-[10px]">
             {p.entity ? (
               <span className="text-[var(--intel-text)]">

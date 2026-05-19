@@ -7,6 +7,10 @@ import { StatsBar } from "./components/StatsBar"
 import { FilterSidebar, type Filters } from "./components/FilterSidebar"
 import { PropertyCard, PropertyCardSkeleton } from "./components/PropertyCard"
 import { PropertyDetailPanel } from "./components/PropertyDetailPanel"
+import {
+  PortfolioDetailPanel,
+  type PortfolioPanelInput,
+} from "./components/PortfolioDetailPanel"
 import type { ApiResponse, Property, Stats } from "./types"
 
 const SQFT_MIN = 1500
@@ -132,6 +136,11 @@ function IntelligencePageInner() {
   const [error, setError] = useState<string | null>(null)
 
   const [detailProperty, setDetailProperty] = useState<Property | null>(null)
+  // Portfolio panel: opens when the user clicks an owner name on a card.
+  // We pre-fill mailing-address + owner-name so the panel's API call can
+  // pull "every property at this address" without a round trip to figure
+  // out which addresses to query.
+  const [portfolioInput, setPortfolioInput] = useState<PortfolioPanelInput | null>(null)
   const debounceRef = useRef<number | null>(null)
   const reqIdRef = useRef(0)
 
@@ -307,6 +316,24 @@ function IntelligencePageInner() {
                   key={p.id}
                   property={p}
                   onViewDetails={() => setDetailProperty(p)}
+                  onViewPortfolio={
+                    p.owner_name && filters.state
+                      ? () =>
+                          setPortfolioInput({
+                            display_name: p.entity?.name ?? p.owner_name ?? "Owner",
+                            label_type: p.entity ? "entity" : "individual",
+                            state: filters.state,
+                            primary_mailing_address: p.owner_mailing_address,
+                            mailing_addresses: p.owner_mailing_address
+                              ? [p.owner_mailing_address]
+                              : [],
+                            owner_name: p.owner_name,
+                            entity_id: p.entity?.id ?? null,
+                            entity_name: p.entity?.name ?? null,
+                            entity_ticker: p.entity?.ticker ?? null,
+                          })
+                      : undefined
+                  }
                 />
               ))}
             </div>
@@ -327,6 +354,15 @@ function IntelligencePageInner() {
         </main>
       </div>
 
+      {/* Portfolio panel renders first so the property panel slides on
+         top of it when the user drills from a portfolio row to one of
+         its properties. The property panel takes precedence on ESC. */}
+      {portfolioInput && (
+        <PortfolioDetailPanel
+          input={portfolioInput}
+          onClose={() => setPortfolioInput(null)}
+        />
+      )}
       {detailProperty && (
         <PropertyDetailPanel property={detailProperty} onClose={() => setDetailProperty(null)} />
       )}

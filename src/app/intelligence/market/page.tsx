@@ -4,6 +4,10 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CountUp } from "../components/CountUp"
+import {
+  PortfolioDetailPanel,
+  type PortfolioPanelInput,
+} from "../components/PortfolioDetailPanel"
 
 type Owner = {
   raw_owner_name: string
@@ -17,14 +21,32 @@ type Owner = {
 }
 
 type PortfolioOwner = {
+  // Display label per /api/intelligence/market/portfolios' priority logic:
+  //   entity > stem > individual > address. The page renders this verbatim;
+  //   the underlying mailing-address / LLC details are still available for
+  //   the expandable detail panel.
+  display_name: string
+  label_type: "entity" | "stem" | "individual" | "address"
+  stem: string | null
+  entity_id: string | null
+  entity_name: string | null
+  entity_ticker: string | null
+  property_count: number
+  llc_count: number
+  total_sqft: number | null
+  total_value: number | null
+  llc_names: string[]
   mailing_address: string
   mailing_city: string | null
   mailing_state: string | null
   mailing_zip: string | null
-  property_count: number
-  llc_names: string[]
-  total_sqft: number | null
-  total_value: number | null
+  mailing_addresses: Array<{
+    address: string
+    city: string | null
+    state: string | null
+    zip: string | null
+    property_count: number
+  }>
 }
 
 type MarketResponse = {
@@ -39,6 +61,10 @@ type MarketResponse = {
     corporate_pct_reliable?: boolean
     corporate_pct_estimated?: boolean
     matched: { matched: number; unmatched: number }
+    // Data-coverage counts for the ownership panel. Null when the
+    // server-side count query failed — UI renders "—" in that case.
+    owner_name_count: number | null
+    mailing_address_count: number | null
   }
   concentration: {
     total_market_count: number
@@ -55,6 +81,8 @@ type MarketResponse = {
 
 type PortfoliosResponse = {
   portfolio_owners: PortfolioOwner[]
+  portfolio_property_count?: number
+  distinct_portfolio_count?: number
   error?: string
 }
 
@@ -101,12 +129,22 @@ function MarketPageInner() {
   // in the dashboard, kept off the critical path so the headline KPIs
   // and owner tables render without waiting on it.
   const [portfolios, setPortfolios] = useState<PortfolioOwner[]>([])
+  // Headline counts derived from the full labeled portfolio set on the
+  // server (NOT the top-50 display slice). Null while the portfolios
+  // request is in flight — the ownership panel shows a placeholder.
+  const [portfolioPropertyCount, setPortfolioPropertyCount] = useState<number | null>(null)
+  const [distinctPortfolioCount, setDistinctPortfolioCount] = useState<number | null>(null)
   const [portfoliosLoading, setPortfoliosLoading] = useState(false)
   const [portfoliosError, setPortfoliosError] = useState<string | null>(null)
 
   const reqIdRef = useRef(0)
   const portfolioReqIdRef = useRef(0)
   const debounceRef = useRef<number | null>(null)
+
+  // Detail panel: opened by clicking a row in either the portfolio table
+  // or the legacy raw-owner tables. The panel does its own fetch against
+  // /api/intelligence/portfolios/[id]; we just hand it the cluster shape.
+  const [panelInput, setPanelInput] = useState<PortfolioPanelInput | null>(null)
 
   const fetchData = useCallback(async (s: string, st: string, hg: boolean) => {
     const myReqId = ++reqIdRef.current
@@ -136,6 +174,8 @@ function MarketPageInner() {
       setPortfoliosLoading(true)
       setPortfoliosError(null)
       setPortfolios([])
+      setPortfolioPropertyCount(null)
+      setDistinctPortfolioCount(null)
       const sp = new URLSearchParams()
       if (s) sp.set("search", s)
       if (st) sp.set("state", st)
@@ -146,6 +186,8 @@ function MarketPageInner() {
         if (myReqId !== portfolioReqIdRef.current) return
         if (json.error) setPortfoliosError(json.error)
         setPortfolios(json.portfolio_owners ?? [])
+        setPortfolioPropertyCount(json.portfolio_property_count ?? null)
+        setDistinctPortfolioCount(json.distinct_portfolio_count ?? null)
       } catch (e: unknown) {
         if (myReqId !== portfolioReqIdRef.current) return
         setPortfoliosError(e instanceof Error ? e.message : "Failed to load portfolios")
@@ -186,6 +228,8 @@ function MarketPageInner() {
         setError(null)
         setData(null)
         setPortfolios([])
+        setPortfolioPropertyCount(null)
+        setDistinctPortfolioCount(null)
         setPortfoliosLoading(false)
         setPortfoliosError(null)
         syncUrl(search, state, hideGov)
@@ -234,43 +278,76 @@ function MarketPageInner() {
             {/* Type breakdown + ownership split */}
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
               <TypeBreakdown data={data} loading={loading} />
-              <OwnershipPanel data={data} loading={loading} />
+              <OwnershipPanel
+                data={data}
+                loading={loading}
+                portfolioPropertyCount={portfolioPropertyCount}
+                distinctPortfolioCount={distinctPortfolioCount}
+                portfoliosLoading={portfoliosLoading}
+              />
             </div>
 
             {/* Concentration headline */}
             <ConcentrationHeadline data={data} loading={loading} />
 
-            {/* Owner rankings */}
-            <div className="mt-6 grid gap-6 xl:grid-cols-2">
-              <OwnerTable
-                title="Top 20 owners by property count"
-                owners={data?.top_owners_by_count ?? []}
-                metric="count"
-                loading={loading}
-              />
-              <OwnerTable
-                title="Top 20 owners by total sqft"
-                owners={data?.top_owners_by_sqft ?? []}
-                metric="sqft"
-                loading={loading}
-              />
-            </div>
-
-            {/* Portfolio owners — shared mailing address. Loaded from a
-               separate endpoint so its slow GROUP BY doesn't block the
-               rest of the dashboard. */}
+            {/* Portfolio owners — the dashboard's primary "who actually
+               owns this market" view. Loaded from a separate endpoint
+               (its mailing-address GROUP BY is the heaviest query of the
+               dashboard) so this section streams in while the rest is
+               already interactive. Sits above the legacy raw-owner
+               tables, which are now collapsed behind a toggle. */}
             <div className="mt-6">
               <PortfolioTable
                 portfolios={portfolios}
                 loading={portfoliosLoading}
                 error={portfoliosError}
+                onSelect={(p) =>
+                  setPanelInput({
+                    display_name: p.display_name,
+                    label_type: p.label_type,
+                    state,
+                    primary_mailing_address: p.mailing_address,
+                    mailing_addresses: (p.mailing_addresses ?? [])
+                      .map((m) => m.address)
+                      .filter(Boolean),
+                    stem: p.stem,
+                    entity_id: p.entity_id,
+                    entity_name: p.entity_name,
+                    entity_ticker: p.entity_ticker,
+                  })
+                }
               />
             </div>
+
+            {/* Legacy raw-owner rankings — analyst view, off by default.
+               These show un-merged LLC names straight from
+               intel_owners_concentration, so demo-critical operators like
+               Olymbec appear split across 9 rows. Useful for forensics
+               but misleading at first glance, hence the toggle. */}
+            <RawOwnerTables
+              data={data}
+              loading={loading}
+              onSelectOwner={(name) =>
+                setPanelInput({
+                  display_name: name,
+                  label_type: "individual",
+                  state,
+                  owner_name: name,
+                })
+              }
+            />
           </>
         )}
 
         <Footer />
       </main>
+
+      {panelInput && (
+        <PortfolioDetailPanel
+          input={panelInput}
+          onClose={() => setPanelInput(null)}
+        />
+      )}
     </div>
   )
 }
@@ -570,78 +647,227 @@ function TypeBreakdown({ data, loading }: { data: MarketResponse | null; loading
   )
 }
 
-function OwnershipPanel({ data, loading }: { data: MarketResponse | null; loading: boolean }) {
+function OwnershipPanel({
+  data,
+  loading,
+  portfolioPropertyCount,
+  distinctPortfolioCount,
+  portfoliosLoading,
+}: {
+  data: MarketResponse | null
+  loading: boolean
+  portfolioPropertyCount: number | null
+  distinctPortfolioCount: number | null
+  portfoliosLoading: boolean
+}) {
   const own = data?.summary.ownership
   const matched = data?.summary.matched
-  const corpPct = data?.summary.corporate_pct ?? 0
-  const knownTotal = (own?.corporate ?? 0) + (own?.individual ?? 0)
-  const indivPct = knownTotal > 0 ? Math.round(((own?.individual ?? 0) / knownTotal) * 100) : 0
+  const total = data?.summary.total ?? 0
+  const ownerNameCount = data?.summary.owner_name_count ?? null
+  const mailingAddressCount = data?.summary.mailing_address_count ?? null
+
+  // Three-segment stacked bar over the inferred-ownership universe. The
+  // "unknown" bucket counts owner names the inference rules couldn't
+  // classify — we surface it explicitly now rather than dropping it.
+  const ownTotal =
+    (own?.corporate ?? 0) + (own?.individual ?? 0) + (own?.unknown ?? 0)
+  const businessPct =
+    ownTotal > 0 ? Math.round(((own?.corporate ?? 0) / ownTotal) * 100) : 0
+  const individualPct =
+    ownTotal > 0 ? Math.round(((own?.individual ?? 0) / ownTotal) * 100) : 0
+  const unknownPct = Math.max(0, 100 - businessPct - individualPct)
+
+  // Coverage percentages — null when total is 0 or the count query failed.
+  const ownerNamePct =
+    total > 0 && ownerNameCount != null
+      ? Math.round((ownerNameCount / total) * 1000) / 10
+      : null
+  const mailingAddressPct =
+    total > 0 && mailingAddressCount != null
+      ? Math.round((mailingAddressCount / total) * 1000) / 10
+      : null
 
   return (
     <Section title="Ownership composition">
       {loading && !data ? (
         <SkeletonRows />
       ) : (
-        <div className="space-y-4">
-          {/* Stacked bar: corporate / individual / unknown */}
-          <div>
+        <div className="space-y-5">
+          {/* Headline 2x2 stat grid — what we KNOW about this market */}
+          <div className="grid grid-cols-2 gap-3 text-[11px]">
+            <CoverageStat
+              label="owner name coverage"
+              valueText={
+                ownerNamePct != null ? `${formatPct(ownerNamePct)}%` : "—"
+              }
+              subText={
+                ownerNameCount != null && total > 0
+                  ? `${ownerNameCount.toLocaleString()} of ${total.toLocaleString()}`
+                  : undefined
+              }
+              accent
+              infoTooltip="Properties where the owner or entity name is known from public tax records."
+            />
+            <CoverageStat
+              label="portfolio-grouped properties"
+              valueText={
+                portfoliosLoading && portfolioPropertyCount == null
+                  ? "…"
+                  : portfolioPropertyCount != null
+                    ? portfolioPropertyCount.toLocaleString()
+                    : "—"
+              }
+              accent
+              infoTooltip="Properties linked to a multi-property portfolio through shared owner mailing addresses or common entity names."
+            />
+            <CoverageStat
+              label="distinct portfolios"
+              valueText={
+                portfoliosLoading && distinctPortfolioCount == null
+                  ? "…"
+                  : distinctPortfolioCount != null
+                    ? distinctPortfolioCount.toLocaleString()
+                    : "—"
+              }
+              infoTooltip="Unique portfolio owners identified through mailing address analysis and entity name grouping."
+            />
+            <CoverageStat
+              label="registered entities"
+              valueText={(matched?.matched ?? 0).toLocaleString()}
+              infoTooltip="Properties matched to a known publicly-traded REIT or registered commercial operator in our entity database."
+            />
+          </div>
+
+          {/* Three-segment ownership bar — likely business / individual /
+              unknown. Inferred from owner-name suffixes when the source
+              data doesn't carry an explicit corporate-flag field. */}
+          <div className="border-t border-[var(--intel-border)] pt-4">
             <div className="mb-2 flex justify-between text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
-              <span>corporate vs individual</span>
+              <span>likely owner type</span>
               <span data-mono className="text-[var(--intel-text-muted)]">
-                {own?.unknown ? `${own.unknown.toLocaleString()} unknown excluded` : ""}
+                {ownTotal > 0 ? `${ownTotal.toLocaleString()} owners` : ""}
               </span>
             </div>
             <div className="flex h-6 overflow-hidden rounded border border-[var(--intel-border)] bg-[var(--intel-bg)]">
               <div
                 className="flex items-center justify-center bg-[var(--intel-accent)] text-[10px] font-semibold uppercase text-[var(--intel-bg)] transition-all duration-500"
-                style={{ width: `${corpPct}%` }}
+                style={{ width: `${businessPct}%` }}
+                title="Likely business-owned"
               >
-                {corpPct >= 8 ? `${corpPct}% business` : null}
+                {businessPct >= 8 ? `${businessPct}% business` : null}
               </div>
               <div
                 className="flex items-center justify-center bg-[var(--intel-bg-elev-2)] text-[10px] font-semibold uppercase text-[var(--intel-text)] transition-all duration-500"
-                style={{ width: `${indivPct}%` }}
+                style={{ width: `${individualPct}%` }}
+                title="Likely individual-owned"
               >
-                {indivPct >= 8 ? `${indivPct}% individ.` : null}
+                {individualPct >= 8 ? `${individualPct}% individ.` : null}
+              </div>
+              <div
+                className="flex items-center justify-center bg-[var(--intel-bg)] text-[10px] font-semibold uppercase text-[var(--intel-text-dim)] transition-all duration-500"
+                style={{ width: `${unknownPct}%` }}
+                title="Owner type could not be inferred"
+              >
+                {unknownPct >= 8 ? `${unknownPct}% unknown` : null}
               </div>
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-3 text-[11px]">
+            <div className="mt-2 grid grid-cols-3 gap-2 text-[11px]">
               <Stat
-                label="business entity (est.)"
+                label="likely business-owned"
                 value={own?.corporate ?? 0}
                 infoTooltip="Inferred from owner-name suffixes (LLC, Inc, Corp, REIT, LP, etc.) when the source data doesn't carry an explicit corporate-flag field. Treat as a best-guess estimate, not a registry lookup."
               />
               <Stat
-                label="individual"
+                label="likely individual-owned"
                 value={own?.individual ?? 0}
-                infoTooltip="Owner names that don't carry a corporate-suffix and look like a personal name (1–4 words, no LLC/Inc/Corp). Sole-proprietor LLCs may be misclassified as Business Entity."
+                infoTooltip="Owner names that don't carry a corporate suffix and look like a personal name (1–4 words, no LLC/Inc/Corp). Sole-proprietor LLCs may be misclassified as business-owned."
+              />
+              <Stat
+                label="unknown"
+                value={own?.unknown ?? 0}
+                muted
+                infoTooltip="Owner name didn't match either heuristic — usually an organization/trust/partnership name that lacks a corporate suffix and isn't formatted like a person's name."
               />
             </div>
           </div>
 
-          <div className="border-t border-[var(--intel-border)] pt-3">
-            <div className="mb-2 text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
-              portfolio match
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-[11px]">
-              <Stat
-                label="identified portfolio"
-                value={matched?.matched ?? 0}
-                accent
-                infoTooltip="Properties where the owner name resolves to a known REIT or operator in our entity registry — fully linked to a parent company, ticker, and subsidiary list."
-              />
-              <Stat
-                label="unidentified owner"
-                value={matched?.unmatched ?? 0}
-                muted
-                infoTooltip="Properties whose owner name didn't match the entity registry. Many of these are real businesses we just don't have a parent record for yet — see the Portfolio Owners table below for shared-mailing-address clusters that surface the same operator across multiple LLCs."
-              />
+          {/* Secondary data-coverage line. Lets users (and us) tell how
+              much portfolio detection is possible in this market without
+              hunting in a separate panel. */}
+          <div className="border-t border-[var(--intel-border)] pt-3 text-[11px]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
+                <span>mailing address coverage</span>
+                <span
+                  className="inline-flex h-3 w-3 cursor-help items-center justify-center rounded-full border border-[var(--intel-border)] text-[8px] text-[var(--intel-text-muted)]"
+                  title="Properties with owner mailing address data, enabling portfolio detection through address clustering."
+                >
+                  ?
+                </span>
+              </div>
+              <div data-mono className="text-[var(--intel-text)]">
+                {mailingAddressPct != null
+                  ? `${formatPct(mailingAddressPct)}%`
+                  : "—"}
+                {mailingAddressCount != null && total > 0 && (
+                  <span className="ml-2 text-[var(--intel-text-muted)]">
+                    {mailingAddressCount.toLocaleString()} of{" "}
+                    {total.toLocaleString()}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
     </Section>
   )
+}
+
+function CoverageStat({
+  label,
+  valueText,
+  subText,
+  accent,
+  infoTooltip,
+}: {
+  label: string
+  valueText: string
+  subText?: string
+  accent?: boolean
+  infoTooltip?: string
+}) {
+  return (
+    <div className="rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg)] px-3 py-2">
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--intel-text-dim)]">
+        <span>{label}</span>
+        {infoTooltip && (
+          <span
+            className="inline-flex h-3 w-3 cursor-help items-center justify-center rounded-full border border-[var(--intel-border)] text-[8px] text-[var(--intel-text-muted)]"
+            title={infoTooltip}
+          >
+            ?
+          </span>
+        )}
+      </div>
+      <div
+        data-mono
+        className={`mt-0.5 text-[18px] leading-tight ${
+          accent ? "text-[var(--intel-accent)]" : "text-[var(--intel-text)]"
+        }`}
+      >
+        {valueText}
+      </div>
+      {subText && (
+        <div className="text-[10px] text-[var(--intel-text-muted)]">{subText}</div>
+      )}
+    </div>
+  )
+}
+
+function formatPct(n: number): string {
+  // Drop trailing ".0" so "100.0%" renders as "100%" but "99.4%" stays.
+  return Number.isInteger(n) ? `${n}` : n.toFixed(1)
 }
 
 function Stat({
@@ -736,11 +962,13 @@ function OwnerTable({
   owners,
   metric,
   loading,
+  onSelectOwner,
 }: {
   title: string
   owners: Owner[]
   metric: "count" | "sqft"
   loading: boolean
+  onSelectOwner?: (name: string) => void
 }) {
   return (
     <Section title={title}>
@@ -764,7 +992,13 @@ function OwnerTable({
               {owners.map((o, i) => (
                 <tr
                   key={`${o.raw_owner_name}-${o.entity_id ?? "x"}-${i}`}
-                  className="border-b border-[var(--intel-border)]/50 hover:bg-[var(--intel-bg-elev-2)] transition-colors"
+                  onClick={
+                    onSelectOwner ? () => onSelectOwner(o.raw_owner_name) : undefined
+                  }
+                  className={`border-b border-[var(--intel-border)]/50 transition-colors hover:bg-[var(--intel-bg-elev-2)] ${
+                    onSelectOwner ? "cursor-pointer" : ""
+                  }`}
+                  title={onSelectOwner ? "View properties owned by this entity" : undefined}
                 >
                   <td data-mono className="py-2 pr-2 text-[var(--intel-text-dim)] text-[11px]">
                     {i + 1}
@@ -813,14 +1047,16 @@ function PortfolioTable({
   portfolios,
   loading,
   error,
+  onSelect,
 }: {
   portfolios: PortfolioOwner[]
   loading: boolean
   error?: string | null
+  onSelect: (p: PortfolioOwner) => void
 }) {
   return (
     <Section
-      title="Portfolio owners"
+      title="Largest property portfolios"
       action={
         <div className="flex items-center gap-2">
           {loading && (
@@ -830,7 +1066,7 @@ function PortfolioTable({
           )}
           <span
             className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-[var(--intel-border)] text-[10px] text-[var(--intel-text-muted)]"
-            title="One real-world owner often holds many properties through different LLCs. Grouping records by tax-bill mailing address surfaces the true portfolio — even when each property is registered to a different shell entity."
+            title="One real-world owner often holds dozens of properties through different LLCs at different mailing addresses. We cluster records by tax-bill mailing address, then merge clusters sharing a distinctive name stem (e.g. all 'Olymbec X LLC' entities), then label by known entity > shared stem > individual > address."
           >
             ?
           </span>
@@ -852,16 +1088,22 @@ function PortfolioTable({
             <thead>
               <tr className="border-b border-[var(--intel-border)] text-[10px] uppercase tracking-widest text-[var(--intel-text-dim)]">
                 <th className="py-2 pr-2 text-left font-medium w-8">#</th>
-                <th className="py-2 pr-2 text-left font-medium">mailing address</th>
+                <th className="py-2 pr-2 text-left font-medium">owner</th>
                 <th className="py-2 pr-2 text-right font-medium">props</th>
+                <th className="py-2 pr-2 text-right font-medium">entities</th>
                 <th className="py-2 pr-2 text-right font-medium">sqft</th>
                 <th className="py-2 pr-2 text-right font-medium">est. value</th>
-                <th className="py-2 pr-2 text-left font-medium">llc names</th>
+                <th className="py-2 pr-2 text-left font-medium">detail</th>
               </tr>
             </thead>
             <tbody>
               {portfolios.map((p, i) => (
-                <PortfolioRowView key={`${p.mailing_address}-${i}`} index={i} p={p} />
+                <PortfolioRowView
+                  key={`${p.display_name}-${i}`}
+                  index={i}
+                  p={p}
+                  onSelect={() => onSelect(p)}
+                />
               ))}
             </tbody>
           </table>
@@ -871,36 +1113,82 @@ function PortfolioTable({
   )
 }
 
-function PortfolioRowView({ index, p }: { index: number; p: PortfolioOwner }) {
+const LABEL_BADGES: Record<PortfolioOwner["label_type"], { text: string; tone: string; hint: string }> = {
+  entity: {
+    text: "registered",
+    tone: "border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)] text-[var(--intel-accent)]",
+    hint: "Matched to a REIT or operator in the entity registry.",
+  },
+  stem: {
+    text: "name match",
+    tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+    hint: "Multiple LLCs across this portfolio share a distinctive name stem (e.g. all 'Olymbec X LLC').",
+  },
+  individual: {
+    text: "individual",
+    tone: "border-sky-500/30 bg-sky-500/10 text-sky-300",
+    hint: "Single owner name with no corporate suffix — likely a person rather than an LLC.",
+  },
+  address: {
+    text: "shared address",
+    tone: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    hint: "Multiple LLCs file from the same mailing address — likely an institutional SPV portfolio.",
+  },
+}
+
+function PortfolioRowView({
+  index,
+  p,
+  onSelect,
+}: {
+  index: number
+  p: PortfolioOwner
+  onSelect: () => void
+}) {
   const [expanded, setExpanded] = useState(false)
   const llcs = p.llc_names ?? []
   const previewLlcs = expanded ? llcs : llcs.slice(0, 3)
   const hidden = Math.max(0, llcs.length - 3)
   const cityState = [p.mailing_city, p.mailing_state].filter(Boolean).join(", ")
+  const badge = LABEL_BADGES[p.label_type]
   return (
-    <tr className="border-b border-[var(--intel-border)]/50 align-top hover:bg-[var(--intel-bg-elev-2)] transition-colors">
+    <tr
+      onClick={onSelect}
+      className="cursor-pointer border-b border-[var(--intel-border)]/50 align-top hover:bg-[var(--intel-bg-elev-2)] transition-colors"
+      title="View portfolio detail"
+    >
       <td data-mono className="py-2 pr-2 text-[var(--intel-text-dim)] text-[11px]">
         {index + 1}
       </td>
       <td className="py-2 pr-2">
-        <div
-          className="truncate text-[12px] text-[var(--intel-text)] max-w-[280px]"
-          title={p.mailing_address}
-        >
-          {p.mailing_address}
-        </div>
-        {cityState && (
-          <div className="text-[10px] text-[var(--intel-text-muted)]">
-            {cityState}
-            {p.mailing_zip ? ` ${p.mailing_zip}` : ""}
+        <div className="flex items-center gap-2">
+          <div
+            className="truncate text-[13px] font-medium text-[var(--intel-text)] max-w-[280px]"
+            title={p.display_name}
+          >
+            {p.display_name}
           </div>
-        )}
+          <span
+            className={`shrink-0 rounded-sm border px-1 py-[1px] text-[9px] uppercase tracking-wider ${badge.tone}`}
+            title={badge.hint}
+          >
+            {badge.text}
+          </span>
+        </div>
+        <div className="text-[10px] text-[var(--intel-text-muted)]">
+          {p.mailing_address}
+          {cityState ? ` · ${cityState}` : ""}
+          {p.mailing_zip ? ` ${p.mailing_zip}` : ""}
+        </div>
       </td>
       <td
         data-mono
         className="py-2 pr-2 text-right text-[12px] text-[var(--intel-accent)] font-semibold"
       >
         {p.property_count.toLocaleString()}
+      </td>
+      <td data-mono className="py-2 pr-2 text-right text-[12px] text-[var(--intel-text-muted)]">
+        {p.llc_count.toLocaleString()}
       </td>
       <td data-mono className="py-2 pr-2 text-right text-[12px] text-[var(--intel-text)]">
         {fmtSqft(p.total_sqft)}
@@ -921,15 +1209,87 @@ function PortfolioRowView({ index, p }: { index: number; p: PortfolioOwner }) {
           {hidden > 0 && (
             <button
               type="button"
-              onClick={() => setExpanded((x) => !x)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setExpanded((x) => !x)
+              }}
               className="text-left text-[10px] uppercase tracking-widest text-[var(--intel-accent)] hover:text-[var(--intel-accent-hover)]"
             >
-              {expanded ? "show less" : `and ${hidden} more`}
+              {expanded ? "show less" : `and ${hidden} more LLC${hidden === 1 ? "" : "s"}`}
             </button>
+          )}
+          {expanded && p.mailing_addresses && p.mailing_addresses.length > 1 && (
+            <div className="mt-2 border-t border-[var(--intel-border)] pt-2 text-[10px]">
+              <div className="mb-1 uppercase tracking-widest text-[var(--intel-text-dim)]">
+                mailing addresses ({p.mailing_addresses.length})
+              </div>
+              {p.mailing_addresses.map((a, i) => (
+                <div key={`${a.address}-${i}`} className="truncate" title={a.address}>
+                  {a.address}
+                  {a.city ? ` — ${a.city}` : ""}
+                  {a.state ? `, ${a.state}` : ""}
+                  {` (${a.property_count})`}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </td>
     </tr>
+  )
+}
+
+/**
+ * Legacy raw-owner view, collapsed behind a toggle. These come straight
+ * from intel_owners_concentration with no portfolio clustering, so they
+ * still show every LLC variant as its own row. The portfolio table above
+ * is the primary view; this stays available for the analyst / forensic
+ * "show me the actual filings" case.
+ */
+function RawOwnerTables({
+  data,
+  loading,
+  onSelectOwner,
+}: {
+  data: MarketResponse | null
+  loading: boolean
+  onSelectOwner: (name: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="mt-6">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between rounded-md border border-dashed border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-4 py-2.5 text-left text-[11px] uppercase tracking-widest text-[var(--intel-text-muted)] transition-colors hover:text-[var(--intel-text)]"
+        aria-expanded={open}
+      >
+        <span>
+          {open ? "−" : "+"} Show individual owner names (un-merged)
+        </span>
+        <span className="text-[10px] text-[var(--intel-text-dim)] normal-case tracking-normal">
+          analyst view · LLCs not portfolio-clustered
+        </span>
+      </button>
+      {open && (
+        <div className="mt-3 grid gap-6 xl:grid-cols-2">
+          <OwnerTable
+            title="Top 20 owners by property count"
+            owners={data?.top_owners_by_count ?? []}
+            metric="count"
+            loading={loading}
+            onSelectOwner={onSelectOwner}
+          />
+          <OwnerTable
+            title="Top 20 owners by total sqft"
+            owners={data?.top_owners_by_sqft ?? []}
+            metric="sqft"
+            loading={loading}
+            onSelectOwner={onSelectOwner}
+          />
+        </div>
+      )}
+    </div>
   )
 }
 

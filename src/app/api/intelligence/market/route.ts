@@ -23,6 +23,26 @@ const TYPE_BUCKET_ORDER = [
   "unknown",
 ] as const
 
+// Market source allowlist. Mirrors intel_market_sources() from
+// supabase/migrations/20260515000001_wire_new_sources_into_market.sql.
+// Used only by the small coverage count queries below — the three main
+// RPCs scope themselves via intel_market_sources() server-side. If you
+// add a source to the SQL function, mirror it here so the coverage
+// numbers stay consistent with the RPC-driven totals.
+const MARKET_SOURCES = [
+  "proptracer_mapping",
+  "fl_dor_public",
+  "nc_onemap_public",
+  "tx_cad_dcad",
+  "tx_cad_tad",
+  "tx_cad_hcad",
+  "ms_maris_public",
+  "tx_txgio_harris",
+  "tx_txgio_bexar",
+  "tx_txgio_travis",
+  "tx_txgio_public",
+]
+
 // Government-owner patterns. Lives in JS (not SQL) on purpose: when this
 // list lived inside intel_is_government_owner(), each ILIKE substring
 // match ran per row across 1.1M+ rows in the hot RPCs, busting our
@@ -245,10 +265,27 @@ export async function GET(req: NextRequest) {
 
   const filters = { p_city: city, p_state: state, p_zip: zip, p_county: county }
 
-  // Three RPC calls in parallel. Government filtering happens in JS
-  // post-hoc (see GOV_PATTERNS at the top of this file).
-  // p_limit bumped to 5000 so the long tail is available to the JS
-  // concentration recompute (top-N over a filtered set).
+  // Coverage-stat builder. Same filter shape as the RPCs use server-side
+  // (state + market source allowlist + optional city/zip/county). count:
+  // 'exact' with head: true is a PG count(*) against an indexed predicate,
+  // so it's ms-fast for the 10k-row scale of a single market. The two
+  // builders below share this base.
+  const buildCountQuery = () => {
+    let q = db
+      .from("intel_properties")
+      .select("id", { count: "exact", head: true })
+      .eq("state", state)
+      .in("source_detail", MARKET_SOURCES)
+    if (city) q = q.ilike("city", `${city}%`)
+    if (zip) q = q.eq("postal_code", zip)
+    if (county) q = q.ilike("county", `%${county}%`)
+    return q
+  }
+
+  // Three RPC calls + two coverage counts in parallel. Government
+  // filtering happens in JS post-hoc (see GOV_PATTERNS at the top of
+  // this file). p_limit bumped to 5000 so the long tail is available
+  // to the JS concentration recompute (top-N over a filtered set).
   //
   // Mailing-address portfolios used to be a 4th call here but its
   // GROUP BY on owner_mailing_address was the slowest of the bunch
@@ -256,15 +293,25 @@ export async function GET(req: NextRequest) {
   // It now lives at /api/intelligence/market/portfolios — the page
   // fetches it separately so the headline KPIs and owner tables
   // render independently.
-  const [summaryRes, concRes, ownersRes] = await Promise.all([
-    db.rpc("intel_market_summary", filters),
-    db.rpc("intel_market_concentration", { ...filters, p_top_n: 10 }),
-    db.rpc("intel_owners_concentration", {
-      ...filters,
-      p_min_properties: 1,
-      p_limit: 5000,
-    }),
-  ])
+  //
+  // The coverage queries are intentionally NOT inside the existing
+  // intel_market_summary RPC. They use the same indexed predicate as
+  // the RPC's CTE but PostgREST count(*) is server-side and cheap, and
+  // we don't want to risk regressing the just-stabilized RPC.
+  const [summaryRes, concRes, ownersRes, ownerNameRes, mailingAddrRes] =
+    await Promise.all([
+      db.rpc("intel_market_summary", filters),
+      db.rpc("intel_market_concentration", { ...filters, p_top_n: 10 }),
+      db.rpc("intel_owners_concentration", {
+        ...filters,
+        p_min_properties: 1,
+        p_limit: 5000,
+      }),
+      buildCountQuery().not("owner_name", "is", null),
+      buildCountQuery()
+        .not("owner_mailing_address", "is", null)
+        .not("owner_mailing_address", "eq", ""),
+    ])
 
   if (summaryRes.error || concRes.error || ownersRes.error) {
     const msgs = [summaryRes.error, concRes.error, ownersRes.error]
@@ -273,6 +320,12 @@ export async function GET(req: NextRequest) {
       .join("; ")
     return NextResponse.json({ error: msgs }, { status: 500 })
   }
+
+  // Coverage counts: log and continue if they fail. The dashboard
+  // degrades gracefully — the new stats just render "—" instead of a
+  // percentage — rather than blowing up the whole response.
+  const ownerNameCount = ownerNameRes.count ?? null
+  const mailingAddressCount = mailingAddrRes.count ?? null
 
   const summary = (summaryRes.data ?? []) as SummaryRow[]
   const concentration = ((concRes.data ?? []) as ConcentrationRow[])[0] ?? {
@@ -387,6 +440,10 @@ export async function GET(req: NextRequest) {
       corporate_pct_reliable: corporatePctReliable,
       corporate_pct_estimated: corporatePctEstimated,
       matched,
+      // Data-coverage counts for the reframed ownership panel. Null if
+      // the count query failed — UI falls back to "—".
+      owner_name_count: ownerNameCount,
+      mailing_address_count: mailingAddressCount,
     },
     concentration: hideGov
       ? (() => {

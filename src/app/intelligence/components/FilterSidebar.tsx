@@ -41,6 +41,7 @@ const PROPERTY_TYPES = [
   "Restaurant/Food",
   "Automotive",
   "Self Storage",
+  "Parking",
   "Religious/Nonprofit",
   "Other",
 ]
@@ -168,7 +169,10 @@ export function FilterSidebar({ initial, onApply, onSearchChange, onClear, state
 
   return (
     <aside className="w-[320px] flex-shrink-0 border-r border-[var(--intel-border)] bg-[var(--intel-bg)]">
-      <div className="sticky top-0 flex max-h-screen flex-col">
+      {/* Sticky container — max height has to subtract the top nav bar
+         (~52px = StatsBar's py-3 + content) or the bottom filters get
+         clipped below the viewport with no scroll affordance. */}
+      <div className="sticky top-0 flex max-h-[calc(100vh-52px)] flex-col">
         {/* Sticky top zone — header, location search, and the Apply/Clear
            controls. Always visible without scrolling so users don't have to
            hunt for the Apply button below the fold on shorter viewports. */}

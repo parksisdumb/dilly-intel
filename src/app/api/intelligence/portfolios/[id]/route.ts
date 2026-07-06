@@ -1,8 +1,42 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { rollupCategory } from "@/lib/intel/property-types"
+import {
+  rollupCategory,
+  patternsForCategory,
+  ALL_ROLLUP_PATTERNS,
+  ROLLUP_CATEGORIES,
+} from "@/lib/intel/property-types"
 
 export const dynamic = "force-dynamic"
+
+/**
+ * Apply a property-type filter to a PostgREST query builder. `category`
+ * is a rollup label; an unknown value is a no-op.
+ *
+ *  - Normal category → OR of ILIKE patterns (one extra top-level AND
+ *    condition alongside the cluster filter).
+ *  - "Other"         → chained NOT ILIKE for every known pattern
+ *    (matches rows hitting no rollup category). NULL property_type rows
+ *    are dropped by this form — an accepted edge for the rare "Other"
+ *    drill-down.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyTypeFilter(q: any, category: string | null): any {
+  if (!category) return q
+  if (!(ROLLUP_CATEGORIES as readonly string[]).includes(category)) return q
+  if (category === "Other") {
+    let out = q
+    for (const p of ALL_ROLLUP_PATTERNS) {
+      out = out.not("property_type", "ilike", `%${p}%`)
+    }
+    return out
+  }
+  const pats = patternsForCategory(category)
+  if (pats.length === 0) return q
+  return q.or(
+    pats.map((p) => `property_type.ilike."%${p}%"`).join(","),
+  )
+}
 
 // ----------------------------------------------------------------------------
 // Portfolio detail endpoint.
@@ -40,6 +74,8 @@ const PROPERTY_SOURCES = [
   "tx_txgio_bexar",
   "tx_txgio_travis",
   "tx_txgio_public",
+  // Added 2026-05-23 — Shelby County (Memphis) ReGIS.
+  "tn_shelby_regis",
 ]
 
 const SELECT_COLUMNS = [
@@ -222,6 +258,10 @@ export async function GET(
   const stem = sp.get("stem")?.trim().toLowerCase() || null
   const owner = sp.get("owner")?.trim() || null
   const hideGov = (sp.get("hide_gov") ?? "true").toLowerCase() !== "false"
+  // Optional property-type filter — carried from the market page when a
+  // type filter is active so the panel shows only this owner's
+  // properties of that type.
+  const propertyType = sp.get("property_type")?.trim() || null
 
   const orFilter = buildClusterFilter(addresses, stem, owner)
   if (!orFilter) {
@@ -241,6 +281,8 @@ export async function GET(
     .eq("state", state)
     .not("street_address", "is", null)
     .or(orFilter)
+  q = applyTypeFilter(q, propertyType)
+  q = q
     .order("estimated_value", { ascending: false, nullsFirst: false })
     .limit(PROPERTY_CAP)
 

@@ -1,3 +1,20 @@
+> # ⚠️ ARCHIVED / DEPRECATED — Dilly Intel v1
+>
+> **This repository is retired and no longer maintained (archived 2026-07-06).**
+> A ground-up rebuild (Dilly Intel v2) supersedes it. Do **not** build on,
+> deploy, or extend this codebase.
+>
+> - **Status:** Read-only archive. No further commits, deploys, or support.
+> - **Data:** The v1 Supabase project (`tsuukismiswxzielbshv`, ~1.39M property
+>   records) is intentionally **kept for reference** and has **not** been
+>   deleted. v2 uses a **fresh, separate** Supabase project — do not point new
+>   work at the v1 instance.
+> - **Successor:** Dilly Intel v2 (new repo + new Supabase project).
+>
+> Everything below is the original v1 documentation, preserved as-is.
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

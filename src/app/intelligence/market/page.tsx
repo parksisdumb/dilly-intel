@@ -8,6 +8,7 @@ import {
   PortfolioDetailPanel,
   type PortfolioPanelInput,
 } from "../components/PortfolioDetailPanel"
+import { rollupCategory } from "@/lib/intel/property-types"
 
 type Owner = {
   raw_owner_name: string
@@ -26,7 +27,7 @@ type PortfolioOwner = {
   //   the underlying mailing-address / LLC details are still available for
   //   the expandable detail panel.
   display_name: string
-  label_type: "entity" | "stem" | "individual" | "address"
+  label_type: "entity" | "stem" | "individual" | "address" | "manual"
   stem: string | null
   entity_id: string | null
   entity_name: string | null
@@ -47,10 +48,25 @@ type PortfolioOwner = {
     zip: string | null
     property_count: number
   }>
+  // True when the pre-stem gov-LLC scrub pro-rated the property_count.
+  // Used to mark the row with an "est." badge — the detail panel
+  // re-queries with gov filtering and shows the exact figure.
+  gov_adjusted: boolean
+  // True when the cluster matches institutional-healthcare patterns
+  // (hospital systems / medical centers). Rendered as a small badge —
+  // the cluster stays visible but the user knows it's a hospital
+  // campus rather than a typical commercial portfolio.
+  is_healthcare_institution: boolean
 }
 
 type MarketResponse = {
-  filters: { city: string | null; state: string | null; zip: string | null; hide_gov?: boolean }
+  filters: {
+    city: string | null
+    state: string | null
+    zip: string | null
+    hide_gov?: boolean
+    property_type?: string | null
+  }
   summary: {
     total: number
     by_type: { bucket: string; count: number }[]
@@ -65,6 +81,12 @@ type MarketResponse = {
     // server-side count query failed — UI renders "—" in that case.
     owner_name_count: number | null
     mailing_address_count: number | null
+    // Market-sizing aggregates for the top KPI strip. Null when the
+    // extended intel_market_summary migration hasn't run yet or when
+    // the records in scope don't carry the value.
+    total_sqft: number | null
+    total_value: number | null
+    avg_year_built: number | null
   }
   concentration: {
     total_market_count: number
@@ -118,6 +140,12 @@ function MarketPageInner() {
   const [hideGov, setHideGov] = useState(
     (searchParams.get("hide_gov") ?? "true").toLowerCase() !== "false"
   )
+  // Property-type filter. "" = whole market. Clicking a row in the type
+  // breakdown sets this and re-fetches everything scoped to that type —
+  // it filters the market page in place rather than navigating away.
+  const [selectedType, setSelectedType] = useState(
+    searchParams.get("property_type") || ""
+  )
   const [data, setData] = useState<MarketResponse | null>(null)
   // Loading starts true only when a state is already in the URL. With no
   // state we render the "Select a state" gate instead of a spinner — and
@@ -146,7 +174,8 @@ function MarketPageInner() {
   // /api/intelligence/portfolios/[id]; we just hand it the cluster shape.
   const [panelInput, setPanelInput] = useState<PortfolioPanelInput | null>(null)
 
-  const fetchData = useCallback(async (s: string, st: string, hg: boolean) => {
+  const fetchData = useCallback(
+    async (s: string, st: string, hg: boolean, pt: string) => {
     const myReqId = ++reqIdRef.current
     setLoading(true)
     setError(null)
@@ -154,6 +183,7 @@ function MarketPageInner() {
     if (s) sp.set("search", s)
     if (st) sp.set("state", st)
     sp.set("hide_gov", hg ? "true" : "false")
+    if (pt) sp.set("property_type", pt)
     try {
       const res = await fetch(`/api/intelligence/market?${sp.toString()}`)
       const json = (await res.json()) as MarketResponse
@@ -169,7 +199,7 @@ function MarketPageInner() {
   }, [])
 
   const fetchPortfolios = useCallback(
-    async (s: string, st: string, hg: boolean) => {
+    async (s: string, st: string, hg: boolean, pt: string) => {
       const myReqId = ++portfolioReqIdRef.current
       setPortfoliosLoading(true)
       setPortfoliosError(null)
@@ -180,6 +210,7 @@ function MarketPageInner() {
       if (s) sp.set("search", s)
       if (st) sp.set("state", st)
       sp.set("hide_gov", hg ? "true" : "false")
+      if (pt) sp.set("property_type", pt)
       try {
         const res = await fetch(`/api/intelligence/market/portfolios?${sp.toString()}`)
         const json = (await res.json()) as PortfoliosResponse
@@ -200,12 +231,13 @@ function MarketPageInner() {
 
   // Update URL params, debounced
   const syncUrl = useCallback(
-    (s: string, st: string, hg: boolean) => {
+    (s: string, st: string, hg: boolean, pt: string) => {
       const sp = new URLSearchParams()
       if (s) sp.set("search", s)
       if (st) sp.set("state", st)
       // Only persist hide_gov when it differs from the default (ON)
       if (!hg) sp.set("hide_gov", "false")
+      if (pt) sp.set("property_type", pt)
       const qs = sp.toString()
       router.replace(qs ? `/intelligence/market?${qs}` : "/intelligence/market", {
         scroll: false,
@@ -232,19 +264,19 @@ function MarketPageInner() {
         setDistinctPortfolioCount(null)
         setPortfoliosLoading(false)
         setPortfoliosError(null)
-        syncUrl(search, state, hideGov)
+        syncUrl(search, state, hideGov, selectedType)
         return
       }
       // Fire both in parallel — they're independent endpoints. The
       // page renders progressively as each lands.
-      fetchData(search, state, hideGov)
-      fetchPortfolios(search, state, hideGov)
-      syncUrl(search, state, hideGov)
+      fetchData(search, state, hideGov, selectedType)
+      fetchPortfolios(search, state, hideGov, selectedType)
+      syncUrl(search, state, hideGov, selectedType)
     }, 300)
     return () => {
       if (debounceRef.current != null) window.clearTimeout(debounceRef.current)
     }
-  }, [search, state, hideGov, fetchData, fetchPortfolios, syncUrl])
+  }, [search, state, hideGov, selectedType, fetchData, fetchPortfolios, syncUrl])
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -272,12 +304,36 @@ function MarketPageInner() {
           <SelectStatePrompt />
         ) : (
           <>
+            {/* Active property-type filter banner */}
+            {selectedType && (
+              <TypeFilterBanner
+                type={selectedType}
+                count={data?.summary.total ?? null}
+                loading={loading}
+                propertiesHref={(() => {
+                  const sp = new URLSearchParams()
+                  if (state) sp.set("state", state)
+                  if (search) sp.set("search", search)
+                  sp.set("property_types", selectedType)
+                  return `/intelligence?${sp.toString()}`
+                })()}
+                onClear={() => setSelectedType("")}
+              />
+            )}
+
             {/* Top KPI strip */}
             <KpiStrip data={data} loading={loading} />
 
             {/* Type breakdown + ownership split */}
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
-              <TypeBreakdown data={data} loading={loading} />
+              <TypeBreakdown
+                data={data}
+                loading={loading}
+                selectedType={selectedType}
+                onSelectType={(t) =>
+                  setSelectedType((cur) => (cur === t ? "" : t))
+                }
+              />
               <OwnershipPanel
                 data={data}
                 loading={loading}
@@ -314,6 +370,9 @@ function MarketPageInner() {
                     entity_id: p.entity_id,
                     entity_name: p.entity_name,
                     entity_ticker: p.entity_ticker,
+                    // Carry the active type filter so the detail panel
+                    // shows only this owner's properties of that type.
+                    property_type: selectedType || null,
                   })
                 }
               />
@@ -333,6 +392,7 @@ function MarketPageInner() {
                   label_type: "individual",
                   state,
                   owner_name: name,
+                  property_type: selectedType || null,
                 })
               }
             />
@@ -490,33 +550,49 @@ function FilterBar({
 }
 
 function KpiStrip({ data, loading }: { data: MarketResponse | null; loading: boolean }) {
+  // The top strip is contractor-facing market sizing: how big is this
+  // market in raw count / floor area / value / vintage. The ownership
+  // split (corporate vs individual, portfolio-matched, distinct owners)
+  // already lives in the OwnershipPanel below with proper labels and
+  // tooltips, so we don't duplicate it here.
   const total = data?.summary.total ?? 0
-  const corp = data?.summary.corporate_pct ?? 0
-  // Hide the percentage when fewer than 10% of records carry an explicit
-  // corporate_owned value (the rest are entirely inferred from owner names,
-  // which isn't reliable enough to headline). When 10%+ have explicit data
-  // but inference still moved some rows, show the value with an "est." tag.
-  const corpReliable = data?.summary.corporate_pct_reliable ?? true
-  const corpEstimated = data?.summary.corporate_pct_estimated ?? false
-  const matched = data?.summary.matched.matched ?? 0
-  const ownersCount = data?.concentration.total_owners_count ?? 0
+  const totalSqft = data?.summary.total_sqft ?? null
+  const totalValue = data?.summary.total_value ?? null
+  const avgYearBuilt = data?.summary.avg_year_built ?? null
   const showSkel = loading && !data
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <Kpi label="commercial properties" value={total} loading={showSkel} accent />
       <Kpi
-        label="corporate owned"
-        value={corp}
+        label="commercial properties"
+        value={total}
         loading={showSkel}
-        format={(n) => `${Math.round(n)}%`}
-        unavailable={!corpReliable && !showSkel}
-        unavailableHint="N/A — fewer than 10% of records in this market carry an explicit corporate-flag value (FL DOR is the main offender)"
-        tag={corpEstimated && corpReliable ? "est." : undefined}
-        tagHint="Some records had no explicit corporate_owned value — these are inferred from owner-name suffixes (LLC, INC, REIT, etc.)"
+        accent
       />
-      <Kpi label="portfolio matched" value={matched} loading={showSkel} />
-      <Kpi label="distinct owners" value={ownersCount} loading={showSkel} />
+      <Kpi
+        label="total building sqft"
+        value={totalSqft ?? 0}
+        loading={showSkel}
+        format={(n) => fmtSqft(n)}
+        unavailable={!showSkel && totalSqft == null}
+        unavailableHint="No building_sqft coverage in this market's sources"
+      />
+      <Kpi
+        label="total est. value"
+        value={totalValue ?? 0}
+        loading={showSkel}
+        format={(n) => fmtMoney(n)}
+        unavailable={!showSkel && totalValue == null}
+        unavailableHint="No estimated_value coverage in this market's sources"
+      />
+      <Kpi
+        label="avg year built"
+        value={avgYearBuilt ?? 0}
+        loading={showSkel}
+        format={(n) => String(Math.round(n))}
+        unavailable={!showSkel && avgYearBuilt == null}
+        unavailableHint="No year_built coverage in this market's sources"
+      />
     </div>
   )
 }
@@ -583,7 +659,17 @@ function Kpi({
   )
 }
 
-function TypeBreakdown({ data, loading }: { data: MarketResponse | null; loading: boolean }) {
+function TypeBreakdown({
+  data,
+  loading,
+  selectedType,
+  onSelectType,
+}: {
+  data: MarketResponse | null
+  loading: boolean
+  selectedType: string
+  onSelectType: (t: string) => void
+}) {
   // Rollup view (default) groups granular PropTracer types into the
   // standard contractor-facing categories. The toggle drops back to the
   // raw PropTracer breakdown for analyst-style use.
@@ -594,8 +680,14 @@ function TypeBreakdown({ data, loading }: { data: MarketResponse | null; loading
   const total = types.reduce((a, t) => a + t.count, 0)
   const max = Math.max(1, ...types.map((t) => t.count))
   const labelGridCols = showDetailed
-    ? "grid-cols-[170px_1fr_56px_56px]"
-    : "grid-cols-[140px_1fr_56px_56px]"
+    ? "grid-cols-[170px_1fr_56px_56px_24px]"
+    : "grid-cols-[140px_1fr_56px_56px_24px]"
+
+  // Each row resolves to a rollup category — that's what the filter
+  // operates on. In detailed view we roll the raw PropTracer string up
+  // first; the type-filter pipeline only knows rollup categories.
+  const rowCategory = (bucket: string): string =>
+    showDetailed ? rollupCategory(bucket) : bucket
 
   return (
     <Section
@@ -617,13 +709,36 @@ function TypeBreakdown({ data, loading }: { data: MarketResponse | null; loading
       ) : types.length === 0 ? (
         <Empty />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {types.map((t) => {
             const pct = total > 0 ? (t.count / total) * 100 : 0
             const barWidth = (t.count / max) * 100
+            const category = rowCategory(t.bucket)
+            const isSelected = !!selectedType && selectedType === category
             return (
-              <div key={t.bucket} className={`grid items-center gap-3 ${labelGridCols}`}>
-                <div className="truncate text-[12px] text-[var(--intel-text)]" title={t.bucket}>
+              <button
+                key={t.bucket}
+                type="button"
+                onClick={() => onSelectType(category)}
+                title={
+                  isSelected
+                    ? `Clear the ${prettyType(category)} filter`
+                    : `Filter the market to ${prettyType(category)}`
+                }
+                className={`group grid w-full items-center gap-3 text-left ${labelGridCols} rounded px-1.5 py-0.5 -mx-1.5 cursor-pointer transition-colors ${
+                  isSelected
+                    ? "border border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)]"
+                    : "border border-transparent hover:bg-[var(--intel-bg-elev-2)]"
+                }`}
+              >
+                <div
+                  className={`truncate text-[12px] ${
+                    isSelected
+                      ? "text-[var(--intel-accent)] font-medium"
+                      : "text-[var(--intel-text)]"
+                  }`}
+                  title={t.bucket}
+                >
                   {showDetailed ? t.bucket : prettyType(t.bucket)}
                 </div>
                 <div className="h-2.5 rounded bg-[var(--intel-bg)] overflow-hidden">
@@ -638,12 +753,64 @@ function TypeBreakdown({ data, loading }: { data: MarketResponse | null; loading
                 <div data-mono className="text-right text-[10px] text-[var(--intel-text-muted)]">
                   {pct.toFixed(1)}%
                 </div>
-              </div>
+                <div
+                  className={`text-right text-[14px] text-[var(--intel-accent)] transition-opacity ${
+                    isSelected
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100"
+                  }`}
+                >
+                  {isSelected ? "✓" : "→"}
+                </div>
+              </button>
             )
           })}
         </div>
       )}
     </Section>
+  )
+}
+
+function TypeFilterBanner({
+  type,
+  count,
+  loading,
+  propertiesHref,
+  onClear,
+}: {
+  type: string
+  count: number | null
+  loading: boolean
+  propertiesHref: string
+  onClear: () => void
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)] px-4 py-2.5">
+      <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--intel-text-muted)]">
+        filtered to
+      </span>
+      <span className="text-[13px] font-semibold text-[var(--intel-accent)]">
+        {prettyType(type)}
+      </span>
+      <span data-mono className="text-[12px] text-[var(--intel-text-muted)]">
+        {loading || count == null
+          ? "…"
+          : `${count.toLocaleString()} properties`}
+      </span>
+      <button
+        type="button"
+        onClick={onClear}
+        className="rounded border border-[var(--intel-border)] bg-[var(--intel-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--intel-text-muted)] transition-colors hover:text-[var(--intel-text)]"
+      >
+        clear filter
+      </button>
+      <Link
+        href={propertiesHref}
+        className="ml-auto text-[11px] font-medium text-[var(--intel-accent)] transition-colors hover:text-[var(--intel-accent-hover)]"
+      >
+        View all {prettyType(type)} properties →
+      </Link>
+    </div>
   )
 }
 
@@ -1079,7 +1246,10 @@ function PortfolioTable({
         </div>
       )}
       {loading && portfolios.length === 0 ? (
-        <SkeletonRows count={8} />
+        // Tight 3-row skeleton — the portfolios fetch takes 3-8 s on
+        // Memphis-scale markets and an 8-row skeleton reads as a giant
+        // blank space until the real rows arrive.
+        <SkeletonRows count={3} />
       ) : portfolios.length === 0 ? (
         <Empty />
       ) : (
@@ -1134,6 +1304,11 @@ const LABEL_BADGES: Record<PortfolioOwner["label_type"], { text: string; tone: s
     tone: "border-amber-500/30 bg-amber-500/10 text-amber-300",
     hint: "Multiple LLCs file from the same mailing address — likely an institutional SPV portfolio.",
   },
+  manual: {
+    text: "curated",
+    tone: "border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)] text-[var(--intel-accent)]",
+    hint: "Operator-verified label from the manual portfolio-label registry.",
+  },
 }
 
 function PortfolioRowView({
@@ -1161,7 +1336,7 @@ function PortfolioRowView({
         {index + 1}
       </td>
       <td className="py-2 pr-2">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <div
             className="truncate text-[13px] font-medium text-[var(--intel-text)] max-w-[280px]"
             title={p.display_name}
@@ -1174,18 +1349,52 @@ function PortfolioRowView({
           >
             {badge.text}
           </span>
+          {p.is_healthcare_institution && (
+            <span
+              className="shrink-0 rounded-sm border border-rose-500/30 bg-rose-500/10 px-1 py-[1px] text-[9px] uppercase tracking-wider text-rose-300"
+              title="Hospital system / healthcare institution — not a typical commercial portfolio."
+            >
+              healthcare
+            </span>
+          )}
         </div>
-        <div className="text-[10px] text-[var(--intel-text-muted)]">
-          {p.mailing_address}
-          {cityState ? ` · ${cityState}` : ""}
-          {p.mailing_zip ? ` ${p.mailing_zip}` : ""}
-        </div>
+        {/* Subtitle. For address-labeled portfolios the display name
+           already contains the mailing address, so duplicating it
+           reads as noise — show a preview of the first 2 LLCs
+           instead. For other label types the address adds info. */}
+        {p.label_type === "address" ? (
+          <div
+            className="truncate text-[10px] text-[var(--intel-text-muted)] max-w-[320px]"
+            title={(p.llc_names ?? []).join("; ")}
+          >
+            {(p.llc_names ?? []).slice(0, 2).join(" · ")}
+            {(p.llc_names ?? []).length > 2
+              ? ` · +${(p.llc_names ?? []).length - 2} more`
+              : ""}
+          </div>
+        ) : (
+          <div className="text-[10px] text-[var(--intel-text-muted)]">
+            {p.mailing_address}
+            {cityState ? ` · ${cityState}` : ""}
+            {p.mailing_zip ? ` ${p.mailing_zip}` : ""}
+          </div>
+        )}
       </td>
       <td
         data-mono
         className="py-2 pr-2 text-right text-[12px] text-[var(--intel-accent)] font-semibold"
       >
-        {p.property_count.toLocaleString()}
+        <div className="flex items-baseline justify-end gap-1">
+          <span>{p.property_count.toLocaleString()}</span>
+          {p.gov_adjusted && (
+            <span
+              className="rounded-sm border border-[var(--intel-border)] bg-[var(--intel-bg)] px-1 py-[1px] text-[8px] font-medium uppercase tracking-wider text-[var(--intel-text-muted)]"
+              title="Estimate — some LLCs at this address are gov-owned and were stripped. The detail panel shows the exact count."
+            >
+              est.
+            </span>
+          )}
+        </div>
       </td>
       <td data-mono className="py-2 pr-2 text-right text-[12px] text-[var(--intel-text-muted)]">
         {p.llc_count.toLocaleString()}
@@ -1256,8 +1465,11 @@ function RawOwnerTables({
   onSelectOwner: (name: string) => void
 }) {
   const [open, setOpen] = useState(false)
+  // Container uses no top margin when closed (just the button +
+  // collapsed inner) so it sits directly under the portfolio table.
+  // When open it gains spacing via `mt-3` on the inner grid.
   return (
-    <div className="mt-6">
+    <div className={open ? "mt-6" : "mt-3"}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

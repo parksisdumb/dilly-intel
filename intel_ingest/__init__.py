@@ -26,6 +26,7 @@ from .property_codes import (
     classify_ga_lucode,
     classify_mo_class,
     classify_ms_cama,
+    classify_shelby_regis,
     is_commercial_tx,
     is_commercial_fl,
     is_commercial_nc,
@@ -33,6 +34,7 @@ from .property_codes import (
     is_commercial_ga,
     is_commercial_mo,
     is_commercial_ms,
+    is_commercial_shelby,
 )
 
 __all__ = [
@@ -49,6 +51,7 @@ __all__ = [
     "classify_ga_lucode",
     "classify_mo_class",
     "classify_ms_cama",
+    "classify_shelby_regis",
     "is_commercial_tx",
     "is_commercial_fl",
     "is_commercial_nc",
@@ -56,4 +59,5 @@ __all__ = [
     "is_commercial_ga",
     "is_commercial_mo",
     "is_commercial_ms",
+    "is_commercial_shelby",
 ]

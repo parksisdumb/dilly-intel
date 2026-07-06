@@ -39,10 +39,9 @@ export type Property = {
 
 export type Stats = {
   total: number
-  corporate_count: number
-  corporate_pct: number
-  matched_count: number
-  avg_sqft: number
+  total_sqft: number | null
+  total_value: number | null
+  avg_year_built: number | null
 }
 
 export type ApiResponse = {

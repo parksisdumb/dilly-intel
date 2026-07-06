@@ -4,7 +4,35 @@ import { parseLocationInput } from "@/lib/intel/location-parse"
 import {
   ROLLUP_CATEGORIES,
   rollupCategory,
+  patternsForCategory,
+  ALL_ROLLUP_PATTERNS,
 } from "@/lib/intel/property-types"
+
+/**
+ * Translate a rollup category (e.g. "Retail") into the SQL type-filter
+ * RPC arguments. Returns nulls when there's no usable filter so the RPC
+ * runs unfiltered.
+ *
+ *   - A normal category → ILIKE patterns for that category, exclude=false.
+ *   - "Other"           → ALL known patterns, exclude=true (match rows
+ *                         that hit no rollup category; NULL type counts
+ *                         as Other on the SQL side).
+ */
+function typeFilterArgs(category: string | null): {
+  patterns: string[] | null
+  exclude: boolean
+} {
+  if (!category) return { patterns: null, exclude: false }
+  if (category === "Other") {
+    return {
+      patterns: ALL_ROLLUP_PATTERNS.map((p) => `%${p}%`),
+      exclude: true,
+    }
+  }
+  const pats = patternsForCategory(category)
+  if (pats.length === 0) return { patterns: null, exclude: false }
+  return { patterns: pats.map((p) => `%${p}%`), exclude: false }
+}
 
 export const dynamic = "force-dynamic"
 
@@ -41,6 +69,8 @@ const MARKET_SOURCES = [
   "tx_txgio_bexar",
   "tx_txgio_travis",
   "tx_txgio_public",
+  // Added 2026-05-23 — Shelby County (Memphis) ReGIS.
+  "tn_shelby_regis",
 ]
 
 // Government-owner patterns. Lives in JS (not SQL) on purpose: when this
@@ -95,18 +125,6 @@ type OwnerRow = {
   total_value: number | null
   avg_sqft: number | null
 }
-
-type PortfolioRow = {
-  owner_mailing_address: string
-  owner_mailing_city: string | null
-  owner_mailing_state: string | null
-  owner_mailing_zip: string | null
-  property_count: number
-  llc_names: string[] | null
-  total_sqft: number | null
-  total_value: number | null
-}
-
 
 // Words to drop before fuzzy comparison. Corporate suffixes and pure
 // noise. We KEEP "Trust", "REIT", "Holdings", "Properties", "Realty",
@@ -261,6 +279,22 @@ export async function GET(req: NextRequest) {
   // unaffected by owner filtering); only owners + concentration use it.
   const hideGov = (sp.get("hide_gov") ?? "true").toLowerCase() !== "false"
 
+  // Optional property-type filter. Accepts a rollup category label
+  // ("Retail", "Industrial", "Other", …). Anything not in the known
+  // taxonomy is ignored (treated as no filter).
+  const propertyTypeRaw = sp.get("property_type")?.trim() || null
+  const propertyType =
+    propertyTypeRaw &&
+    (ROLLUP_CATEGORIES as readonly string[]).includes(propertyTypeRaw)
+      ? propertyTypeRaw
+      : null
+  const { patterns: typePatterns, exclude: typeExclude } =
+    typeFilterArgs(propertyType)
+  const typeArgs = {
+    p_type_patterns: typePatterns,
+    p_type_exclude: typeExclude,
+  }
+
   const db = createAdminClient()
 
   const filters = { p_city: city, p_state: state, p_zip: zip, p_county: county }
@@ -279,6 +313,19 @@ export async function GET(req: NextRequest) {
     if (city) q = q.ilike("city", `${city}%`)
     if (zip) q = q.eq("postal_code", zip)
     if (county) q = q.ilike("county", `%${county}%`)
+    // Property-type filter for the coverage counts. The include case
+    // (a normal rollup category) is a clean OR of ILIKE patterns. The
+    // "Other" case is a negation that PostgREST can't express cleanly
+    // alongside a NULL-OR — these two counts are supplementary coverage
+    // indicators, so for "Other" we leave them market-wide rather than
+    // approximate.
+    if (typePatterns && !typeExclude) {
+      q = q.or(
+        patternsForCategory(propertyType as string)
+          .map((p) => `property_type.ilike."%${p}%"`)
+          .join(","),
+      )
+    }
     return q
   }
 
@@ -298,14 +345,19 @@ export async function GET(req: NextRequest) {
   // intel_market_summary RPC. They use the same indexed predicate as
   // the RPC's CTE but PostgREST count(*) is server-side and cheap, and
   // we don't want to risk regressing the just-stabilized RPC.
+  // intel_market_summary and intel_owners_concentration take the type
+  // filter. intel_market_concentration deliberately does NOT — when a
+  // type filter is active the concentration line is derived below from
+  // the (type-filtered) summary total + owners list instead.
   const [summaryRes, concRes, ownersRes, ownerNameRes, mailingAddrRes] =
     await Promise.all([
-      db.rpc("intel_market_summary", filters),
+      db.rpc("intel_market_summary", { ...filters, ...typeArgs }),
       db.rpc("intel_market_concentration", { ...filters, p_top_n: 10 }),
       db.rpc("intel_owners_concentration", {
         ...filters,
         p_min_properties: 1,
         p_limit: 5000,
+        ...typeArgs,
       }),
       buildCountQuery().not("owner_name", "is", null),
       buildCountQuery()
@@ -338,6 +390,21 @@ export async function GET(req: NextRequest) {
 
   // Pivot summary into a structured shape
   const total = summary.find((r) => r.metric === "total")?.cnt ?? 0
+  // Market-sizing aggregates from the extended intel_market_summary RPC
+  // (migration 20260519000001). All three return 0 when the extended
+  // migration hasn't been applied — handled as null below so the UI
+  // shows "—" instead of "0".
+  const totalSqftRaw = summary.find((r) => r.metric === "total_sqft")?.cnt
+  const totalValueRaw = summary.find((r) => r.metric === "total_value")?.cnt
+  const avgYearRaw = summary.find((r) => r.metric === "avg_year_built")?.cnt
+  const totalSqft =
+    totalSqftRaw != null && totalSqftRaw > 0 ? Number(totalSqftRaw) : null
+  const totalValue =
+    totalValueRaw != null && totalValueRaw > 0 ? Number(totalValueRaw) : null
+  const avgYearBuilt =
+    avgYearRaw != null && avgYearRaw >= 1800 && avgYearRaw <= 2100
+      ? Number(avgYearRaw)
+      : null
 
   const byTypeRaw = summary
     .filter((r) => r.metric === "by_type")
@@ -429,7 +496,14 @@ export async function GET(req: NextRequest) {
     .map(clusterToOwnerRow)
 
   return NextResponse.json({
-    filters: { city, state, zip, county, hide_gov: hideGov },
+    filters: {
+      city,
+      state,
+      zip,
+      county,
+      hide_gov: hideGov,
+      property_type: propertyType,
+    },
     summary: {
       total,
       by_type: byType,
@@ -444,34 +518,45 @@ export async function GET(req: NextRequest) {
       // the count query failed — UI falls back to "—".
       owner_name_count: ownerNameCount,
       mailing_address_count: mailingAddressCount,
+      // Market-sizing KPIs for the top strip. Null when the source rows
+      // don't carry a value (TX TxGIO / MS MARIS have minimal sqft
+      // coverage, so the headline may be N/A).
+      total_sqft: totalSqft,
+      total_value: totalValue,
+      avg_year_built: avgYearBuilt,
     },
-    concentration: hideGov
-      ? (() => {
-          // Recompute concentration from the clustered + gov-filtered
-          // owners list. The RPC's totals are gov-inclusive, so we'd
-          // otherwise show "top 10 own X% of total" with gov dragging
-          // down both numerator and denominator inconsistently.
-          const totalProps = clusters.reduce(
-            (s, c) => s + c.property_count, 0
-          )
-          const top10 = clusters.slice(0, 10).reduce(
-            (s, c) => s + c.property_count, 0
-          )
-          return {
-            total_market_count: totalProps,
-            total_owners_count: clusters.length,
-            top_10_property_count: top10,
-            top_10_pct: totalProps > 0
-              ? Math.round((10000 * top10) / totalProps) / 100
-              : 0,
-          }
-        })()
-      : {
-          total_market_count: concentration.total_market_count,
-          total_owners_count: concentration.total_owners_count,
-          top_10_property_count: concentration.top_n_property_count,
-          top_10_pct: concentration.top_n_pct ?? 0,
-        },
+    // Concentration line.
+    //
+    // Unfiltered: uses intel_market_concentration's market-wide totals
+    // as the denominator so every number reconciles with the KPI bar.
+    //
+    // Type-filtered: intel_market_concentration was NOT given the type
+    // filter, so its totals are market-wide and wrong for this view.
+    // Instead derive everything from the type-filtered data already in
+    // hand — total = summary.total (type-filtered), owners = clustered
+    // type-filtered owners list. top-10 is the cluster-sum either way.
+    concentration: (() => {
+      const typeFiltered = propertyType != null
+      const totalMarket = typeFiltered
+        ? total
+        : concentration.total_market_count
+      const totalOwners = typeFiltered
+        ? clusters.length
+        : concentration.total_owners_count
+      const top10Property =
+        hideGov || typeFiltered
+          ? clusters.slice(0, 10).reduce((s, c) => s + c.property_count, 0)
+          : concentration.top_n_property_count
+      const top10Pct = totalMarket > 0
+        ? Math.round((10000 * top10Property) / totalMarket) / 100
+        : 0
+      return {
+        total_market_count: totalMarket,
+        total_owners_count: totalOwners,
+        top_10_property_count: top10Property,
+        top_10_pct: top10Pct,
+      }
+    })(),
     top_owners_by_count: topByCount,
     top_owners_by_sqft: topBySqft,
     // Portfolio owners moved to /api/intelligence/market/portfolios.

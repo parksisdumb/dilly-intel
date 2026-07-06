@@ -32,6 +32,8 @@ const PROPERTY_SOURCES = [
   "tx_txgio_bexar",
   "tx_txgio_travis",
   "tx_txgio_public",
+  // Added 2026-05-23 — Shelby County (Memphis) ReGIS county-assessor data.
+  "tn_shelby_regis",
   "cook_county_il_public",
   "oh_cuyahoga_public",
   "oh_franklin_public",

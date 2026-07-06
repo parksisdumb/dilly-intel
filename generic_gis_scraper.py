@@ -37,6 +37,7 @@ import argparse
 import json
 import sys
 import time
+from collections import Counter
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -50,6 +51,7 @@ from intel_ingest import (
     classify_ga_lucode,
     classify_mo_class,
     classify_tx_state_class,
+    classify_shelby_regis,
 )
 
 ROOT = Path(__file__).parent
@@ -83,6 +85,15 @@ class StateConfig:
     # `out_sr` (typically EPSG:4326 for direct WGS84 lat/lon).
     return_geometry: bool = False
     out_sr: int | None = None
+    # OBJECTID keyset pagination. resultOffset paging degrades and
+    # silently skips/duplicates rows on some flaky ArcGIS servers; keyset
+    # paging (WHERE OBJECTID > last_max, ORDER BY OBJECTID) is stable.
+    # Opt-in per preset so the established offset-paged presets are
+    # untouched.
+    use_keyset: bool = False
+    # When False the SupabaseUpserter's min-building-sqft gate is
+    # disabled — for sources whose layer carries no building_sqft field.
+    enforce_sqft_min: bool = True
 
 
 # Arkansas Planning_Cadastre — layer 6 = PARCEL_POLYGON_CAMP
@@ -263,11 +274,61 @@ STATE_PRESETS: dict[str, StateConfig] = {
         return_geometry=True,
         out_sr=4326,
     ),
+    # Shelby County, TN (Memphis) — ReGIS CERT_Parcel layer. County
+    # assessor data with proper classification fields (LANDUSE), fresh
+    # (TAXYR 2026). Coexists with PropTracer Memphis data under a
+    # distinct source_detail.
+    #
+    # The server-side WHERE pre-filters 353k all-type parcels down to
+    # ~35k commercial before they leave the database. The endpoint is
+    # load-balanced and flaky (some nodes return 0 for valid queries),
+    # so this preset uses keyset pagination + the resilient fetch
+    # wrapper and a small page_size.
+    "tn_shelby_regis": StateConfig(
+        state="Tennessee - Shelby County (Memphis ReGIS)",
+        state_abbr="TN-SHELBY",
+        endpoint=(
+            "https://gis.shelbycountytn.gov/arcgis/rest/services/"
+            "Parcel/CERT_Parcel/MapServer/0"
+        ),
+        source_detail="tn_shelby_regis",
+        # 500 — the endpoint's maxRecordCount is 1000 but it's flaky;
+        # smaller pages reduce the blast radius of a bad node.
+        page_size=500,
+        field_map={},  # custom mapper handles the field layout
+        use_code_field="LANDUSE",
+        classifier="shelby_regis",
+        where=(
+            "LANDUSE IN ('COMMERCIAL','OFFICE','INDUSTRIAL',"
+            "'MULTI-FAMILY','INSTITUTIONAL','PARKING')"
+        ),
+        progress_file=ROOT / "progress_tn_shelby_regis.json",
+        fips_prefix="47",
+        return_geometry=True,
+        out_sr=4326,
+        use_keyset=True,
+        enforce_sqft_min=False,  # no building_sqft field on this layer
+    ),
 }
 
 
 HTTP_TIMEOUT = (15, 300)
 LOG_INTERVAL = 5_000
+
+# Resilient-fetch tuning for flaky load-balanced endpoints (Shelby ReGIS).
+# A 200 response with 0 features is ambiguous — a bad backend node, or
+# the genuine end of data. We retry; if every retry is still empty the
+# caller treats it as end-of-data.
+ZERO_RESULT_RETRIES = 3       # retries on a 0-feature 200 response
+ZERO_RESULT_DELAY = 5         # seconds between 0-result retries
+MAX_HTTP_RETRIES = 5          # retries on a transient HTTP error
+HTTP_RETRY_STATUSES = {500, 502, 503, 504}
+# Keyset paging: when a page exhausts its 0-result retries we confirm
+# end-of-data with a returnCountOnly probe. If the probe says rows still
+# remain, the page was just flaky and we retry it. This cap stops an
+# infinite loop if the endpoint stays down — bail and let --resume pick
+# up from the saved OBJECTID cursor.
+MAX_FLAKY_PAGE_STREAK = 8
 
 
 def _normalize_int(v) -> int | None:
@@ -594,7 +655,7 @@ def _unused_map_mo_stlouis_city_feature(attr: dict) -> dict | None:  # noqa: F84
     }
 
 
-def _txgio_polygon_centroid(geometry: dict | None) -> tuple[float, float] | None:
+def _polygon_centroid(geometry: dict | None) -> tuple[float, float] | None:
     """Mean of all vertex coordinates across all rings of an ArcGIS
     polygon. ArcGIS returns geometry as {"rings": [[[x,y],[x,y],...]]}.
     When the layer was queried with outSR=4326 the values are already
@@ -695,7 +756,7 @@ def map_tx_txgio_feature(
     # Centroid from polygon rings (already WGS84 due to outSR=4326).
     lat: float | None = None
     lon: float | None = None
-    centroid = _txgio_polygon_centroid(geometry)
+    centroid = _polygon_centroid(geometry)
     if centroid is not None:
         lat_c, lon_c = centroid
         # Sanity-gate to Texas bounding box — anything outside means
@@ -793,6 +854,163 @@ def map_ga_fulton_feature(attr: dict) -> dict | None:
     }
 
 
+# -------------------------------------------------------------------------
+# Shelby County, TN (Memphis ReGIS) — CERT_Parcel layer.
+# Attribute keys come back with the exact field-name casing (UPPERCASE
+# for most, mixed-case for Latitude/Longitude) — confirmed via the
+# 2026-05-22 preview.
+# -------------------------------------------------------------------------
+
+# Shelby's lat/lon (and polygon centroids) must land inside this box —
+# Memphis / Shelby County. Anything outside means a bad coordinate.
+_SHELBY_LAT_RANGE = (34.8, 35.5)
+_SHELBY_LON_RANGE = (-90.3, -89.5)
+
+
+def _shelby_adrno(v) -> str | None:
+    """OWN_ADRNO / PAR_ADRNO are Double-typed street numbers (369.0).
+    Render as a plain integer string; drop zero / negative placeholders."""
+    n = _normalize_int(v)
+    return str(n) if n is not None and n > 0 else None
+
+
+def _assemble_shelby_street(attr: dict, prefix: str) -> str | None:
+    """Assemble a street address from Shelby component fields.
+    `prefix` is 'PAR_' (situs) or 'OWN_' (owner mailing)."""
+    parts = [
+        _shelby_adrno(attr.get(f"{prefix}ADRNO")),
+        _str(attr.get(f"{prefix}ADRPREDIR")),
+        _str(attr.get(f"{prefix}ADRSTR")),
+        _str(attr.get(f"{prefix}ADRSUF")),
+        _str(attr.get(f"{prefix}ADRPOSTDIR")),
+    ]
+    street = " ".join(p for p in parts if p).strip()
+    return street or None
+
+
+def _assemble_shelby_owner_mailing(attr: dict) -> str | None:
+    """Owner mailing street address. OWN_ADDR1 is near-empty (0.2%), so
+    we assemble from the OWN_ADR* components and append any unit, then
+    fall back to OWN_ADDR1 only if assembly produced nothing."""
+    street = _assemble_shelby_street(attr, "OWN_")
+    unit = " ".join(
+        p for p in (
+            _str(attr.get("OWN_UNITDESC")),
+            _str(attr.get("OWN_UNITNO")),
+        ) if p
+    ).strip()
+    if street and unit:
+        street = f"{street} {unit}"
+    elif unit and not street:
+        street = unit
+    return street or _str(attr.get("OWN_ADDR1"))
+
+
+def _shelby_coords(
+    attr: dict, geometry: dict | None
+) -> tuple[float | None, float | None]:
+    """Latitude/Longitude (already WGS84) with a Shelby-bbox sanity gate;
+    polygon-centroid fallback when the columns are missing/invalid."""
+    lat = _normalize_float(attr.get("Latitude"))
+    lon = _normalize_float(attr.get("Longitude"))
+
+    def _in_box(la: float | None, lo: float | None) -> bool:
+        return (
+            la is not None and lo is not None
+            and _SHELBY_LAT_RANGE[0] <= la <= _SHELBY_LAT_RANGE[1]
+            and _SHELBY_LON_RANGE[0] <= lo <= _SHELBY_LON_RANGE[1]
+        )
+
+    if _in_box(lat, lon):
+        return (lat, lon)
+
+    centroid = _polygon_centroid(geometry)
+    if centroid is not None:
+        cla, clo = centroid
+        if _in_box(cla, clo):
+            return (cla, clo)
+    return (None, None)
+
+
+def map_tn_shelby_regis_feature(
+    attr: dict, geometry: dict | None
+) -> dict | None:
+    """Shelby County (Memphis) ReGIS CERT_Parcel mapper.
+
+    Classification is LANDUSE-driven via classify_shelby_regis(); the
+    server-side WHERE already restricts the universe to commercial
+    LANDUSE values, so the is_comm gate here mostly catches the rare
+    null/unknown LANDUSE row.
+    """
+    landuse = _str(attr.get("LANDUSE"))
+    luc = _str(attr.get("LUC"))
+    owner = _str(attr.get("OWNER"))
+    bucket, desc, is_comm = classify_shelby_regis(landuse, luc, owner)
+    if not is_comm:
+        return None
+
+    # PARID has variable internal whitespace (fixed-width padding, e.g.
+    # 'D0217   00225'). Collapse it once and use the normalized form for
+    # external_id / apn / parcel_id alike.
+    parid_raw = _str(attr.get("PARID"))
+    if not parid_raw:
+        return None
+    parid = " ".join(parid_raw.split())
+
+    # Situs address — PAR_ADDR1 is 100% populated; component assembly is
+    # a belt-and-suspenders fallback only.
+    street = _str(attr.get("PAR_ADDR1")) or _assemble_shelby_street(attr, "PAR_")
+    if not street:
+        return None
+
+    # Owner name — append OWNER_EXT (extended/secondary name) when present.
+    owner_ext = _str(attr.get("OWNER_EXT"))
+    if owner and owner_ext:
+        owner_name = f"{owner} / {owner_ext}"
+    else:
+        owner_name = owner or owner_ext
+
+    muni = _str(attr.get("MUNI"))
+    city = muni.title() if muni else None
+
+    lat, lon = _shelby_coords(attr, geometry)
+
+    # ZONING has no dedicated column — fold it into property_use_desc
+    # alongside the LANDUSE-derived description for reviewer context.
+    zoning = _str(attr.get("ZONING"))
+    use_desc = f"{desc} | Zoning: {zoning}" if zoning else desc
+
+    return {
+        "external_id": f"TN-SHELBY-{parid}",
+        "source_detail": "tn_shelby_regis",
+        "street_address": street,
+        "city": city,
+        "state": "TN",
+        "county": "Shelby",
+        "county_fips": "47157",
+        "postal_code": (_str(attr.get("PAR_ZIP")) or "")[:10] or None,
+        "owner_name": owner_name,
+        "raw_owner_name": owner,
+        # OWN_ADDR1 is near-empty — assemble from components (see helper).
+        "owner_mailing_address": _assemble_shelby_owner_mailing(attr),
+        "owner_mailing_city": _str(attr.get("OWN_CITY")),
+        "owner_mailing_state": _str(attr.get("OWN_STATE")),
+        "owner_mailing_zip": (_str(attr.get("OWN_ZIP")) or "")[:10] or None,
+        "property_type": bucket,
+        "property_use_code": luc,
+        "property_use_desc": use_desc,
+        # CERT_Parcel layer carries no sqft / year-built / value fields.
+        "building_sqft": None,
+        "year_built": None,
+        "estimated_value": None,
+        "assessed_value": None,
+        "latitude": lat,
+        "longitude": lon,
+        "apn": parid,
+        "parcel_id": parid,
+    }
+
+
 def map_generic_feature(attr: dict, cfg: dict, classifier_fn) -> dict | None:
     """
     Generic mapper for users who pass --field-map JSON. Field map keys are
@@ -842,17 +1060,30 @@ def fetch_page(
     page_size: int,
     return_geometry: bool = False,
     out_sr: int | None = None,
+    keyset_oid: int | None = None,
 ) -> dict:
+    """Fetch one ArcGIS /query page.
+
+    Offset paging (default) sends resultOffset. Keyset paging — used when
+    `keyset_oid` is not None — instead appends `AND OBJECTID > keyset_oid`
+    to the WHERE and relies on the OBJECTID ASC order, which is stable
+    even on flaky servers where resultOffset drifts.
+    """
     url = endpoint.rstrip("/") + "/query"
+    if keyset_oid is not None:
+        effective_where = f"({where}) AND OBJECTID > {keyset_oid}"
+    else:
+        effective_where = where
     params: dict[str, str | int] = {
-        "where": where,
+        "where": effective_where,
         "outFields": "*",
         "returnGeometry": "true" if return_geometry else "false",
         "f": "json",
-        "resultOffset": offset,
         "resultRecordCount": page_size,
         "orderByFields": "OBJECTID ASC",
     }
+    if keyset_oid is None:
+        params["resultOffset"] = offset
     if return_geometry and out_sr is not None:
         # Ask the service to project geometry to the SR we want
         # (EPSG:4326 for WGS84 lat/lon) — saves us a client-side
@@ -863,6 +1094,201 @@ def fetch_page(
     return r.json()
 
 
+def fetch_page_resilient(
+    session: requests.Session,
+    cfg: StateConfig,
+    *,
+    offset: int = 0,
+    keyset_oid: int | None = None,
+) -> tuple[dict, bool]:
+    """Fetch one page with retry, for flaky load-balanced endpoints.
+
+    Returns (data, exhausted). `exhausted` is True when a 200 response
+    came back with 0 features even after ZERO_RESULT_RETRIES retries —
+    the caller decides whether that means end-of-data.
+
+    Transient HTTP errors (500/502/503/504) and network errors retry
+    with exponential backoff up to MAX_HTTP_RETRIES; a hard failure
+    after that re-raises.
+    """
+    http_fails = 0
+    zero_results = 0
+    while True:
+        try:
+            data = fetch_page(
+                session, cfg.endpoint, cfg.where, offset, cfg.page_size,
+                return_geometry=cfg.return_geometry, out_sr=cfg.out_sr,
+                keyset_oid=keyset_oid,
+            )
+        except requests.HTTPError as e:
+            status = getattr(e.response, "status_code", None)
+            http_fails += 1
+            if status in HTTP_RETRY_STATUSES and http_fails <= MAX_HTTP_RETRIES:
+                delay = min(2 ** http_fails, 60)
+                print(f"  [warn] HTTP {status} — backoff {delay}s "
+                      f"({http_fails}/{MAX_HTTP_RETRIES})")
+                time.sleep(delay)
+                continue
+            raise
+        except requests.RequestException as e:
+            http_fails += 1
+            if http_fails <= MAX_HTTP_RETRIES:
+                delay = min(2 ** http_fails, 60)
+                print(f"  [warn] {type(e).__name__}: {e} — backoff {delay}s "
+                      f"({http_fails}/{MAX_HTTP_RETRIES})")
+                time.sleep(delay)
+                continue
+            raise
+
+        features = data.get("features") or []
+        if features:
+            return data, False
+
+        # 200 OK but 0 features — flaky node, or the genuine end of data.
+        zero_results += 1
+        if zero_results > ZERO_RESULT_RETRIES:
+            return data, True
+        print(f"  [warn] 0 results — retry {zero_results}/{ZERO_RESULT_RETRIES} "
+              f"after {ZERO_RESULT_DELAY}s")
+        time.sleep(ZERO_RESULT_DELAY)
+
+
+def _map_feature(cfg: StateConfig, feat: dict) -> dict | None:
+    """Dispatch one ArcGIS feature to the right per-source mapper."""
+    attr = feat.get("attributes") or {}
+    if cfg.state_abbr == "AR":
+        return map_ar_feature(attr, cfg.fips_prefix)
+    if cfg.state_abbr == "OH-CUY":
+        return map_oh_cuyahoga_feature(attr)
+    if cfg.state_abbr == "OH-FRA":
+        return map_oh_franklin_feature(attr)
+    if cfg.state_abbr == "GA-FUL":
+        return map_ga_fulton_feature(attr)
+    if cfg.state_abbr == "TN-SHELBY":
+        return map_tn_shelby_regis_feature(attr, feat.get("geometry"))
+    if cfg.state_abbr.startswith("TX-TXGIO"):
+        return map_tx_txgio_feature(
+            attr, feat.get("geometry"), source_detail=cfg.source_detail
+        )
+    fn = CLASSIFIERS.get(cfg.classifier)
+    if fn is None:
+        raise RuntimeError(f"No classifier {cfg.classifier!r} registered")
+    return map_generic_feature(
+        attr,
+        {
+            "field_map": cfg.field_map,
+            "use_code_field": cfg.use_code_field,
+            "source_detail": cfg.source_detail,
+        },
+        fn,
+    )
+
+
+def _run_keyset(
+    cfg: StateConfig,
+    args: argparse.Namespace,
+    progress: Progress,
+    upserter: SupabaseUpserter,
+    session: requests.Session,
+) -> int:
+    """OBJECTID-keyset pagination loop for flaky endpoints (Shelby ReGIS).
+    Each page is `WHERE (base) AND OBJECTID > last_oid ORDER BY OBJECTID`;
+    the cursor advances to the page's max OBJECTID."""
+    last_oid = progress.get("last_oid", 0) if args.resume else 0
+    if args.resume and last_oid:
+        print(f"[{cfg.state_abbr.lower()}] resuming after OBJECTID {last_oid:,}")
+    else:
+        progress["last_oid"] = 0
+        progress.save()
+
+    total_seen = 0
+    total_kept = 0
+    flaky_streak = 0
+
+    while True:
+        if args.max_features and total_seen >= args.max_features:
+            print(f"[{cfg.state_abbr.lower()}] --max-features cap reached")
+            break
+
+        try:
+            data, exhausted = fetch_page_resilient(
+                session, cfg, keyset_oid=last_oid
+            )
+        except requests.RequestException as e:
+            print(f"[{cfg.state_abbr.lower()}] fatal fetch error after retries "
+                  f"at OBJECTID>{last_oid}: {e} — bailing (resume with --resume)")
+            break
+
+        if exhausted:
+            # A 0-result page is ambiguous: genuine end of data, or a run
+            # of bad load-balancer nodes. Confirm with a lighter, hard-
+            # retried returnCountOnly probe before deciding — this is what
+            # stops a flaky page mid-stream from silently truncating the
+            # ingest.
+            remaining = _arcgis_count(
+                session, cfg.endpoint,
+                f"({cfg.where}) AND OBJECTID > {last_oid}",
+            )
+            if remaining <= 0:
+                print(f"[{cfg.state_abbr.lower()}] 0-result page + count probe "
+                      f"confirms 0 rows past OBJECTID {last_oid:,} — "
+                      f"end of data")
+                break
+            flaky_streak += 1
+            print(f"[{cfg.state_abbr.lower()}] [warn] 0-result page but count "
+                  f"probe says {remaining:,} rows remain past OBJECTID "
+                  f"{last_oid:,} — flaky node, retrying page "
+                  f"({flaky_streak}/{MAX_FLAKY_PAGE_STREAK})")
+            if flaky_streak >= MAX_FLAKY_PAGE_STREAK:
+                print(f"[{cfg.state_abbr.lower()}] {MAX_FLAKY_PAGE_STREAK} "
+                      f"consecutive flaky pages — bailing; rerun with "
+                      f"--resume to continue from OBJECTID {last_oid:,}")
+                break
+            time.sleep(ZERO_RESULT_DELAY)
+            continue
+
+        flaky_streak = 0
+        features = data.get("features") or []
+        page_oids: list[int] = []
+        for feat in features:
+            total_seen += 1
+            oid = (feat.get("attributes") or {}).get("OBJECTID")
+            if isinstance(oid, int):
+                page_oids.append(oid)
+            payload = _map_feature(cfg, feat)
+            if payload is not None:
+                if args.dry_run:
+                    if total_kept < 5:
+                        print(f"[{cfg.state_abbr.lower()}]   sample: {payload}")
+                else:
+                    upserter.add(payload)
+                total_kept += 1
+            if total_seen % LOG_INTERVAL == 0:
+                print(f"[{cfg.state_abbr.lower()}] seen={total_seen:,} "
+                      f"kept={total_kept:,} upserted={upserter.upserted:,} "
+                      f"OBJECTID~{last_oid:,}")
+
+        if not page_oids:
+            # No OBJECTIDs to advance the cursor — stop rather than spin.
+            print(f"[{cfg.state_abbr.lower()}] page carried no OBJECTID — stopping")
+            break
+        last_oid = max(page_oids)
+        progress["last_oid"] = last_oid
+        progress["records_processed"] = upserter.upserted
+        progress.save()
+
+        if (len(features) < cfg.page_size
+                and not data.get("exceededTransferLimit", False)):
+            break
+
+    upserter.flush()
+    print(
+        f"[{cfg.state_abbr.lower()}] DONE — seen={total_seen:,} kept={total_kept:,} "
+        f"upserted={upserter.upserted:,} stats={upserter.stats()}"
+    )
+    return 0
+
+
 def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
     progress = Progress(cfg.progress_file)
     if args.reset:
@@ -870,19 +1296,27 @@ def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
         print(f"[{cfg.state_abbr.lower()}] progress reset.")
         return 0
 
+    # TxGIO and Shelby ReGIS layers carry no building_sqft, so the
+    # upserter's min-sqft gate would reject every row — disable it.
+    enforce_sqft_min = (
+        cfg.enforce_sqft_min and not cfg.state_abbr.startswith("TX-TXGIO")
+    )
+    upserter = SupabaseUpserter(
+        source_detail=cfg.source_detail, enforce_sqft_min=enforce_sqft_min
+    )
+    session = requests.Session()
+    session.headers.update({"User-Agent": "DillyIntel/1.0"})
+
+    # Keyset-paged presets (Shelby ReGIS) use the resilient OBJECTID loop.
+    if cfg.use_keyset:
+        return _run_keyset(cfg, args, progress, upserter, session)
+
     offset = progress.get("last_offset", 0) if args.resume else 0
     if args.resume and offset:
         print(f"[{cfg.state_abbr.lower()}] resuming at offset {offset:,}")
     else:
         progress["last_offset"] = 0
         progress.save()
-
-    # TxGIO doesn't publish building_sqft, so the upserter would always
-    # see NULL and the min-sqft gate is moot. Disable it explicitly.
-    enforce_sqft_min = not cfg.state_abbr.startswith("TX-TXGIO")
-    upserter = SupabaseUpserter(source_detail=cfg.source_detail, enforce_sqft_min=enforce_sqft_min)
-    session = requests.Session()
-    session.headers.update({"User-Agent": "DillyIntel/1.0"})
 
     total_seen = 0
     total_kept = 0
@@ -914,35 +1348,8 @@ def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
             break
 
         for feat in features:
-            attr = feat.get("attributes") or {}
             total_seen += 1
-            if cfg.state_abbr == "AR":
-                payload = map_ar_feature(attr, cfg.fips_prefix)
-            elif cfg.state_abbr == "OH-CUY":
-                payload = map_oh_cuyahoga_feature(attr)
-            elif cfg.state_abbr == "OH-FRA":
-                payload = map_oh_franklin_feature(attr)
-            elif cfg.state_abbr == "GA-FUL":
-                payload = map_ga_fulton_feature(attr)
-            elif cfg.state_abbr.startswith("TX-TXGIO"):
-                payload = map_tx_txgio_feature(
-                    attr,
-                    feat.get("geometry"),
-                    source_detail=cfg.source_detail,
-                )
-            else:
-                fn = CLASSIFIERS.get(cfg.classifier)
-                if fn is None:
-                    raise RuntimeError(f"No classifier {cfg.classifier!r} registered")
-                payload = map_generic_feature(
-                    attr,
-                    {
-                        "field_map": cfg.field_map,
-                        "use_code_field": cfg.use_code_field,
-                        "source_detail": cfg.source_detail,
-                    },
-                    fn,
-                )
+            payload = _map_feature(cfg, feat)
             if payload is not None:
                 if args.dry_run:
                     # Print the first 5 mapped payloads so the user can
@@ -972,6 +1379,179 @@ def run_state_preset(cfg: StateConfig, args: argparse.Namespace) -> int:
         f"[{cfg.state_abbr.lower()}] DONE — seen={total_seen:,} kept={total_kept:,} "
         f"upserted={upserter.upserted:,} stats={upserter.stats()}"
     )
+    return 0
+
+
+# -------------------------------------------------------------------------
+# Preview mode — STEP-1-style sanity check of a preset (currently Shelby
+# ReGIS). Reads metadata + a sample, runs everything through the real
+# mapper/classifier, ingests nothing.
+# -------------------------------------------------------------------------
+
+
+def _arcgis_count(
+    session: requests.Session, endpoint: str, where: str, tries: int = 12
+) -> int:
+    """returnCountOnly with retry — flaky Shelby nodes return 0 for valid
+    queries, so keep retrying until a non-zero count comes back."""
+    url = endpoint.rstrip("/") + "/query"
+    best = 0
+    for _ in range(tries):
+        try:
+            r = session.get(
+                url,
+                params={"where": where, "returnCountOnly": "true",
+                        "f": "json"},
+                timeout=HTTP_TIMEOUT,
+            )
+            r.raise_for_status()
+            best = max(best, r.json().get("count", 0) or 0)
+        except (requests.RequestException, ValueError):
+            best = max(best, 0)
+        if best > 0:
+            return best
+        time.sleep(0.5)
+    return best
+
+
+def _arcgis_groupby(
+    session: requests.Session, endpoint: str, where: str, field: str,
+    tries: int = 12,
+) -> list[tuple]:
+    """groupBy-count statistics query with retry."""
+    url = endpoint.rstrip("/") + "/query"
+    outstat = json.dumps([{
+        "statisticType": "count",
+        "onStatisticField": "OBJECTID",
+        "outStatisticFieldName": "cnt",
+    }])
+    for _ in range(tries):
+        try:
+            r = session.get(
+                url,
+                params={
+                    "where": where,
+                    "groupByFieldsForStatistics": field,
+                    "outStatistics": outstat,
+                    "orderByFields": "cnt DESC",
+                    "f": "json",
+                },
+                timeout=HTTP_TIMEOUT,
+            )
+            r.raise_for_status()
+            feats = r.json().get("features", []) or []
+        except (requests.RequestException, ValueError):
+            feats = []
+        if feats:
+            return [
+                (f["attributes"].get(field), f["attributes"].get("cnt"))
+                for f in feats
+            ]
+        time.sleep(0.5)
+    return []
+
+
+def preview_shelby_regis(cfg: StateConfig) -> int:
+    """Preview the Shelby ReGIS preset: distributions, address assembly,
+    coordinates, and sample mapped records. Ingests nothing."""
+    session = requests.Session()
+    session.headers.update({"User-Agent": "DillyIntel/1.0"})
+
+    print("=" * 72)
+    print("Shelby County ReGIS — scraper preview (NO INGEST)")
+    print("=" * 72)
+    print(f"endpoint : {cfg.endpoint}")
+    print(f"where    : {cfg.where}")
+    print(f"page_size: {cfg.page_size}   keyset: {cfg.use_keyset}   "
+          f"geometry: {cfg.return_geometry}")
+
+    total = _arcgis_count(session, cfg.endpoint, cfg.where)
+    print(f"\ncommercial parcels matching WHERE: {total:,}")
+
+    print("\nLANDUSE distribution (within the WHERE filter):")
+    for val, c in _arcgis_groupby(session, cfg.endpoint, cfg.where, "LANDUSE"):
+        print(f"   {str(val):26s} {c:>8,}")
+
+    print("\nTAXYR distribution (freshness check — expect 2026):")
+    for val, c in _arcgis_groupby(session, cfg.endpoint, cfg.where, "TAXYR"):
+        print(f"   {val}: {c:,}")
+
+    # Sample via the real keyset loop, run through the real mapper.
+    sample_pages = 6
+    raw: list[dict] = []
+    mapped: list[dict] = []
+    last_oid = 0
+    for _ in range(sample_pages):
+        data, exhausted = fetch_page_resilient(session, cfg, keyset_oid=last_oid)
+        if exhausted:
+            break
+        feats = data.get("features") or []
+        for feat in feats:
+            raw.append(feat)
+            payload = map_tn_shelby_regis_feature(
+                feat.get("attributes") or {}, feat.get("geometry")
+            )
+            if payload is not None:
+                mapped.append(payload)
+        oids = [o for o in
+                ((f.get("attributes") or {}).get("OBJECTID") for f in feats)
+                if isinstance(o, int)]
+        if not oids:
+            break
+        last_oid = max(oids)
+        if len(feats) < cfg.page_size:
+            break
+
+    print(f"\nsampled {len(raw):,} raw records (keyset paging); "
+          f"mapper kept {len(mapped):,}")
+    if not mapped:
+        print("!! mapper kept nothing — check field mapping / classifier")
+        return 1
+
+    buckets = Counter(p["property_type"] for p in mapped)
+    print("\nproperty_type distribution (mapped sample):")
+    for b, c in buckets.most_common():
+        print(f"   {b:18s} {c:>6,}  ({100.0 * c / len(mapped):5.1f}%)")
+    keep_rate = len(mapped) / len(raw) if raw else 0.0
+    print(f"\nmapper keep-rate: {keep_rate * 100:.1f}%  ->  extrapolated "
+          f"commercial across {total:,}: ~{int(total * keep_rate):,}")
+
+    print("\nowner mailing address assembly (10 samples — OWN_ADDR1 is empty,"
+          " assembled from components):")
+    shown = 0
+    for feat in raw:
+        if shown >= 10:
+            break
+        attr = feat.get("attributes") or {}
+        assembled = _assemble_shelby_owner_mailing(attr)
+        if not assembled:
+            continue
+        shown += 1
+        comps = (f"ADRNO={attr.get('OWN_ADRNO')!r} "
+                 f"PREDIR={attr.get('OWN_ADRPREDIR')!r} "
+                 f"STR={attr.get('OWN_ADRSTR')!r} "
+                 f"SUF={attr.get('OWN_ADRSUF')!r} "
+                 f"POSTDIR={attr.get('OWN_ADRPOSTDIR')!r}")
+        print(f"   [{shown}] {comps}")
+        print(f"       -> {assembled!r}  |  "
+              f"{attr.get('OWN_CITY')}, {attr.get('OWN_STATE')} "
+              f"{attr.get('OWN_ZIP')}")
+
+    with_xy = sum(1 for p in mapped
+                  if p["latitude"] is not None and p["longitude"] is not None)
+    print(f"\ncoordinates: {with_xy:,}/{len(mapped):,} mapped records carry a "
+          f"valid in-Shelby lat/lon "
+          f"({100.0 * with_xy / len(mapped):.1f}%)")
+
+    print("\n20 sample commercial records (full field mapping):")
+    for i, payload in enumerate(mapped[:20], 1):
+        print(f"\n--- sample {i} ---")
+        for k, v in payload.items():
+            print(f"   {k:22s}: {v!r}")
+
+    print("\n" + "=" * 72)
+    print("PREVIEW COMPLETE — nothing ingested.")
+    print("=" * 72)
     return 0
 
 
@@ -1015,6 +1595,10 @@ def main() -> int:
     parser.add_argument("--reset", action="store_true")
     parser.add_argument("--dry-run", action="store_true",
                         help="apply mapper/classifier but skip the upsert; prints first 5 sample payloads")
+    parser.add_argument("--preview", action="store_true",
+                        help="rich preview: distributions, address assembly, coordinates, "
+                             "and 20 sample mapped records — ingests nothing. "
+                             "(implemented for --state tn_shelby_regis)")
     parser.add_argument("--no-geometry", action="store_true",
                         help="force returnGeometry=false even on presets that set return_geometry=True. "
                              "Use when an ArcGIS gateway 504s on geometry-heavy pages — the records "
@@ -1028,6 +1612,12 @@ def main() -> int:
             cfg = replace(cfg, return_geometry=False, out_sr=None)
             print(f"[{cfg.state_abbr.lower()}] --no-geometry: requesting attribute-only pages "
                   f"(lat/lon will be NULL for this run)")
+        if args.preview:
+            if cfg.state_abbr == "TN-SHELBY":
+                return preview_shelby_regis(cfg)
+            print(f"[{cfg.state_abbr.lower()}] --preview is only implemented for "
+                  f"tn_shelby_regis; use --dry-run for a generic sample dump")
+            return 2
         return run_state_preset(cfg, args)
     return run_custom(args)
 

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { PropertyDetailPanel } from "./PropertyDetailPanel"
+import { rollupCategory } from "@/lib/intel/property-types"
 import type { Property } from "../types"
 
 // ----------------------------------------------------------------------------
@@ -18,7 +19,7 @@ import type { Property } from "../types"
 export type PortfolioPanelInput = {
   /** Cosmetic title — comes from the upstream label pipeline. */
   display_name: string
-  label_type: "entity" | "stem" | "individual" | "address"
+  label_type: "entity" | "stem" | "individual" | "address" | "manual"
   /** Which state to scope the query to. Required. */
   state: string
   /** Primary mailing address (used for the URL handle). */
@@ -33,6 +34,12 @@ export type PortfolioPanelInput = {
   entity_id?: string | null
   entity_name?: string | null
   entity_ticker?: string | null
+  /**
+   * Active market-page property-type filter (a rollup category). When
+   * set, the detail panel scopes its property query to that type so it
+   * shows only this owner's properties of that type.
+   */
+  property_type?: string | null
 }
 
 type AddressMeta = {
@@ -101,6 +108,11 @@ const LABEL_BADGE: Record<
     text: "Shared Address",
     tone: "border-amber-500/30 bg-amber-500/10 text-amber-300",
   },
+  manual: {
+    text: "Curated",
+    tone:
+      "border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)] text-[var(--intel-accent)]",
+  },
 }
 
 type SortKey = "value" | "sqft" | "year" | "type" | "address"
@@ -121,6 +133,13 @@ export function PortfolioDetailPanel({ input, onClose }: Props) {
     null,
   )
 
+  // Client-side filters over the already-loaded property list. Cheaper
+  // than re-querying the API for an in-portfolio narrowing — for
+  // 100-200-property clusters a single pass through the array is
+  // sub-millisecond.
+  const [query, setQuery] = useState("")
+  const [typeFilter, setTypeFilter] = useState<string | null>(null)
+
   // Build the query params once per input change.
   const params = useMemo(() => {
     const sp = new URLSearchParams()
@@ -129,6 +148,7 @@ export function PortfolioDetailPanel({ input, onClose }: Props) {
     for (const a of addrs) if (a) sp.append("address", a)
     if (input.stem) sp.set("stem", input.stem)
     if (input.owner_name) sp.set("owner", input.owner_name)
+    if (input.property_type) sp.set("property_type", input.property_type)
     return sp
   }, [input])
 
@@ -189,7 +209,30 @@ export function PortfolioDetailPanel({ input, onClose }: Props) {
 
   const sortedProperties = useMemo(() => {
     if (!data) return []
-    const arr = [...data.properties]
+    const needle = query.trim().toLowerCase()
+    const filtered = data.properties.filter((p) => {
+      // Text search hits address, city, and owner name. Lowercased once
+      // above and each field compared as substring.
+      if (needle) {
+        const haystack = [
+          p.street_address,
+          p.city,
+          p.owner_name,
+          p.raw_owner_name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+        if (!haystack.includes(needle)) return false
+      }
+      // Property type filter uses the rollup categories (same labels the
+      // breakdown chips render). null = no filter.
+      if (typeFilter) {
+        const cat = p.property_type ? rollupCategory(p.property_type) : "Other"
+        if (cat !== typeFilter) return false
+      }
+      return true
+    })
     const cmp = (a: Property, b: Property): number => {
       switch (sortKey) {
         case "sqft":
@@ -205,9 +248,9 @@ export function PortfolioDetailPanel({ input, onClose }: Props) {
           return (a.estimated_value ?? 0) - (b.estimated_value ?? 0)
       }
     }
-    arr.sort((a, b) => (sortAsc ? cmp(a, b) : -cmp(a, b)))
-    return arr
-  }, [data, sortKey, sortAsc])
+    filtered.sort((a, b) => (sortAsc ? cmp(a, b) : -cmp(a, b)))
+    return filtered
+  }, [data, sortKey, sortAsc, query, typeFilter])
 
   const sortBy = useCallback(
     (k: SortKey) => {
@@ -320,6 +363,10 @@ export function PortfolioDetailPanel({ input, onClose }: Props) {
             sortAsc={sortAsc}
             onSortBy={sortBy}
             onSelect={setSelectedProperty}
+            query={query}
+            onQueryChange={setQuery}
+            typeFilter={typeFilter}
+            onTypeFilterChange={setTypeFilter}
           />
         </div>
       </div>
@@ -632,6 +679,10 @@ function PropertyTable({
   sortAsc,
   onSortBy,
   onSelect,
+  query,
+  onQueryChange,
+  typeFilter,
+  onTypeFilterChange,
 }: {
   data: DetailResponse | null
   sortedProperties: Property[]
@@ -641,11 +692,76 @@ function PropertyTable({
   sortAsc: boolean
   onSortBy: (k: SortKey) => void
   onSelect: (p: Property) => void
+  query: string
+  onQueryChange: (v: string) => void
+  typeFilter: string | null
+  onTypeFilterChange: (v: string | null) => void
 }) {
+  const total = data?.properties.length ?? 0
+  const shown = sortedProperties.length
+  const active = !!query || typeFilter != null
   return (
     <Section
-      title={`Properties (${data?.properties.length.toLocaleString() ?? "—"})`}
+      title={
+        active
+          ? `Properties (showing ${shown.toLocaleString()} of ${total.toLocaleString()})`
+          : `Properties (${total.toLocaleString()})`
+      }
     >
+      {/* Filter row — text search across address/city/owner, plus a
+         chip for each property type present in the portfolio. Both are
+         client-side filters over the already-loaded list. */}
+      {total > 0 && (
+        <div className="mb-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+              placeholder="filter by address, city, or owner"
+              className="flex-1 rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-3 py-1.5 text-[12px] text-[var(--intel-text)] placeholder-[var(--intel-text-dim)] outline-none focus:border-[var(--intel-accent-border)]"
+            />
+            {active && (
+              <button
+                type="button"
+                onClick={() => {
+                  onQueryChange("")
+                  onTypeFilterChange(null)
+                }}
+                className="rounded-md border border-[var(--intel-border)] bg-[var(--intel-bg-elev)] px-2.5 py-1.5 text-[10px] uppercase tracking-widest text-[var(--intel-text-muted)] transition-colors hover:text-[var(--intel-text)]"
+              >
+                clear
+              </button>
+            )}
+          </div>
+          {(data?.property_types ?? []).length > 1 && (
+            <div className="flex flex-wrap gap-1.5">
+              {(data?.property_types ?? []).map((t) => {
+                const selected = typeFilter === t.bucket
+                return (
+                  <button
+                    key={t.bucket}
+                    type="button"
+                    onClick={() =>
+                      onTypeFilterChange(selected ? null : t.bucket)
+                    }
+                    className={`rounded-full border px-2.5 py-0.5 text-[10px] transition-colors ${
+                      selected
+                        ? "border-[var(--intel-accent-border)] bg-[var(--intel-accent-soft)] text-[var(--intel-accent)]"
+                        : "border-[var(--intel-border)] bg-[var(--intel-bg-elev)] text-[var(--intel-text-muted)] hover:text-[var(--intel-text)]"
+                    }`}
+                  >
+                    <span data-mono className="mr-1">
+                      {t.count}
+                    </span>
+                    {t.bucket}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
       {error && (
         <div className="mb-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-[11px] text-red-400">
           {error}
@@ -654,7 +770,11 @@ function PropertyTable({
       {loading && (!data || data.properties.length === 0) ? (
         <SkeletonRows count={8} />
       ) : sortedProperties.length === 0 ? (
-        <Empty />
+        active ? (
+          <Empty hint="No properties match the current filters." />
+        ) : (
+          <Empty />
+        )
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">

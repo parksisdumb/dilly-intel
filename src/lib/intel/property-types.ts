@@ -27,6 +27,7 @@ export const ROLLUP_CATEGORIES = [
   "Restaurant/Food",
   "Automotive",
   "Self Storage",
+  "Parking",
   "Religious/Nonprofit",
   "Other",
 ] as const
@@ -207,6 +208,18 @@ export const ROLLUP_PATTERNS: Array<{
       "condominium office",
       "office/residential",
       "financial building",
+    ],
+  },
+
+  // Parking — lots / garages / decks. Its own category (not folded into
+  // Industrial or Other) so paving / striping / sealcoat contractors can
+  // target it directly. The Shelby ReGIS classifier emits
+  // property_type = "parking"; PropTracer's granular "Parking Garage" /
+  // "Parking Lot" strings also land here.
+  {
+    category: "Parking",
+    patterns: [
+      "parking",
     ],
   },
 ]

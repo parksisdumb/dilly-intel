@@ -27,6 +27,10 @@ COMMERCIAL_BUCKETS = {
     "mixed_use",
     "hospitality",
     "other_commercial",
+    # Parking lots / garages — relevant to paving, striping, sealcoat,
+    # and concrete contractors. A standalone bucket so the UI can label
+    # it "Parking" rather than folding it into generic commercial.
+    "parking",
 }
 
 
@@ -842,3 +846,104 @@ def classify_ar_parceltype(parceltype: str | None) -> tuple[str, str, bool]:
         return ("other_commercial", "Mineral", False)
 
     return ("other_commercial", f"AR {s}", True)
+
+
+# -------------------------------------------------------------------------
+# Tennessee — Shelby County ReGIS (Memphis assessor, CERT_Parcel layer).
+#
+# The endpoint carries three classification fields:
+#   CLASS    — coarse one-letter R/C/E/I/F (residential / commercial /
+#              exempt / industrial / farm). Too coarse: CLASS=C mixes
+#              multifamily, commercial, office, vacant, parking.
+#   LUC      — 114 granular numeric land-use codes, but the endpoint
+#              publishes no code-book.
+#   LANDUSE  — 11 clean text values, 100% populated.
+#
+# Preview (2026-05-22) confirmed every LUC code rolls up to exactly one
+# LANDUSE, so LANDUSE is the classifier and LUC is kept only as the
+# stored property_use_code.
+#
+# INSTITUTIONAL is the one mixed bucket (hospitals + clinics + schools +
+# churches + government). We sub-classify it: an owner name carrying a
+# healthcare keyword becomes "healthcare"; everything else in
+# INSTITUTIONAL stays "other_commercial".
+# -------------------------------------------------------------------------
+
+# Healthcare keywords for the INSTITUTIONAL sub-classification. Matched
+# (case-insensitively) anywhere in the owner name.
+_SHELBY_HEALTHCARE_OWNER_KEYWORDS = (
+    "HOSPITAL", "MEDICAL", "CLINIC", "NURSING",
+    "METHODIST", "BAPTIST",
+    "LEBONHEUR", "LE BONHEUR",
+    "ST JUDE", "ST. JUDE", "SAINT JUDE",
+)
+
+# LANDUSE value -> (bucket, description). INSTITUTIONAL is handled
+# separately. is_commercial is derived from COMMERCIAL_BUCKETS so the
+# "parking" bucket (added to that set) counts as commercial.
+_SHELBY_LANDUSE_BUCKETS: dict[str, tuple[str, str]] = {
+    # COMMERCIAL is the strip-mall / store / restaurant / car-wash bucket
+    # in Shelby's taxonomy. Routed to "retail" so it lands in the Retail
+    # rollup category on the market dashboard rather than the catch-all
+    # "Other". (Earlier emitted "other_commercial"; migration
+    # 20260523000002 backfills the in-place fix.)
+    "COMMERCIAL": ("retail", "Commercial"),
+    "OFFICE": ("office", "Office"),
+    "INDUSTRIAL": ("industrial", "Industrial"),
+    "MULTI-FAMILY": ("multifamily", "Multifamily"),
+    "PARKING": ("parking", "Parking"),
+    # Skip categories — kept explicit so an unexpected value falls through
+    # to "unknown" rather than being silently treated as one of these.
+    "SINGLE-FAMILY": ("residential", "Single-family residential"),
+    "VACANT": ("vacant", "Vacant"),
+    "COMMON AREA LAND": ("vacant", "Common area land"),
+    "RECREATION/OPEN SPACE": ("vacant", "Recreation / open space"),
+}
+
+
+def classify_shelby_regis(
+    landuse: str | None,
+    luc: str | None = None,
+    owner_name: str | None = None,
+) -> tuple[str, str, bool]:
+    """
+    Shelby County (Memphis) ReGIS classifier. Keys on LANDUSE; uses
+    owner_name only for the INSTITUTIONAL healthcare sub-classification.
+    `luc` is accepted for signature parity / future refinement but is not
+    needed for bucketing (every LUC rolls up to one LANDUSE).
+
+    Returns (bucket, description, is_commercial).
+
+    Examples:
+        ("COMMERCIAL", "034", "ACME LLC")        -> ("other_commercial", ...,  True)
+        ("OFFICE", "068", None)                  -> ("office", "Office", True)
+        ("PARKING", "001", None)                 -> ("parking", "Parking", True)
+        ("INSTITUTIONAL", "008", "BAPTIST HOSP") -> ("healthcare", ...,  True)
+        ("INSTITUTIONAL", "008", "CITY SCHOOL")  -> ("other_commercial", ..., True)
+        ("SINGLE-FAMILY", "062", None)           -> ("residential", ...,  False)
+    """
+    lu = (landuse or "").strip().upper()
+    if not lu:
+        return ("unknown", "Unknown", False)
+
+    if lu == "INSTITUTIONAL":
+        owner_u = (owner_name or "").upper()
+        if any(kw in owner_u for kw in _SHELBY_HEALTHCARE_OWNER_KEYWORDS):
+            return ("healthcare", "Institutional — healthcare", True)
+        return ("other_commercial", "Institutional", True)
+
+    entry = _SHELBY_LANDUSE_BUCKETS.get(lu)
+    if entry is None:
+        # Unrecognized LANDUSE — skip rather than guess.
+        return ("unknown", f"Shelby LANDUSE {lu}", False)
+
+    bucket, desc = entry
+    return (bucket, desc, bucket in COMMERCIAL_BUCKETS)
+
+
+def is_commercial_shelby(
+    landuse: str | None,
+    luc: str | None = None,
+    owner_name: str | None = None,
+) -> bool:
+    return classify_shelby_regis(landuse, luc, owner_name)[2]

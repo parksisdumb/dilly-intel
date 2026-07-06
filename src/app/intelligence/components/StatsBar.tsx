@@ -5,23 +5,29 @@ import { CountUp } from "./CountUp"
 
 type Stats = {
   total: number
-  corporate_count: number
-  corporate_pct: number
-  // True when explicit corporate_owned values cover >50% of the filtered
-  // set. Below that threshold, the percentage is unreliable (FL DOR rows
-  // mostly have NULL) and the StatsBar shows "N/A" instead.
-  corporate_pct_reliable?: boolean
-  matched_count: number
-  avg_sqft: number
+  total_sqft: number | null
+  total_value: number | null
+  avg_year_built: number | null
 }
 
 type Props = {
   stats: Stats | null
+  // Main-fetch loading — drives the "properties" count skeleton.
   loading: boolean
+  // Aggregate KPIs come from a separate /properties/stats fetch that
+  // fires in parallel; this flag lets the sqft / value / year skeletons
+  // animate independently of the property-count tile.
+  aggregatesLoading: boolean
   lastUpdated: string | null
 }
 
-export function StatsBar({ stats, loading, lastUpdated }: Props) {
+export function StatsBar({ stats, loading, aggregatesLoading, lastUpdated }: Props) {
+  // Aggregates haven't landed yet when stats is non-null (main fetch
+  // returned) but the three aggregate fields are still null AND the
+  // aggregates request is in flight. Show skeletons in that window
+  // rather than "N/A" — the latter would flash before the real number
+  // arrives a second later.
+  const aggUnready = aggregatesLoading
   return (
     <div className="border-b border-[var(--intel-border)] bg-[var(--intel-bg-elev)]">
       <div className="flex items-center gap-8 px-6 py-3">
@@ -34,21 +40,25 @@ export function StatsBar({ stats, loading, lastUpdated }: Props) {
           accent
         />
         <Stat
-          label="corporate owned"
-          value={stats?.corporate_pct ?? 0}
-          loading={loading}
-          format={(n) => `${Math.round(n)}%`}
-          unavailable={stats != null && stats.corporate_pct_reliable === false}
+          label="total sqft"
+          value={stats?.total_sqft ?? 0}
+          loading={aggUnready}
+          format={fmtSqft}
+          unavailable={!aggUnready && stats != null && stats.total_sqft == null}
         />
         <Stat
-          label="portfolio matched"
-          value={stats?.matched_count ?? 0}
-          loading={loading}
+          label="total est. value"
+          value={stats?.total_value ?? 0}
+          loading={aggUnready}
+          format={fmtMoney}
+          unavailable={!aggUnready && stats != null && stats.total_value == null}
         />
         <Stat
-          label="avg sqft"
-          value={stats?.avg_sqft ?? 0}
-          loading={loading}
+          label="avg year built"
+          value={stats?.avg_year_built ?? 0}
+          loading={aggUnready}
+          format={(n) => String(Math.round(n))}
+          unavailable={!aggUnready && stats != null && stats.avg_year_built == null}
         />
         <div className="ml-auto flex items-center gap-4">
           <Link
@@ -110,7 +120,7 @@ function Stat({
       </div>
       <div
         data-mono
-        title={unavailable ? "insufficient ownership data" : undefined}
+        title={unavailable ? "no data for this filter set" : undefined}
         className={`text-lg font-medium ${
           unavailable
             ? "text-[var(--intel-text-dim)]"
@@ -129,6 +139,19 @@ function Stat({
       </div>
     </div>
   )
+}
+
+function fmtSqft(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${Math.round(n / 1_000).toLocaleString()}k`
+  return `${Math.round(n).toLocaleString()}`
+}
+
+function fmtMoney(n: number): string {
+  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1)}B`
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `$${Math.round(n / 1_000)}k`
+  return `$${Math.round(n)}`
 }
 
 function fmtRelative(iso: string): string {

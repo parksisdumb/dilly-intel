@@ -133,6 +133,11 @@ function IntelligencePageInner() {
   // present and a fetch actually fires — without a state we render the
   // "Select a state" prompt instead of a spinner forever.
   const [loading, setLoading] = useState(!!initialFilters.state)
+  // Aggregate KPIs (total_sqft / total_value / avg_year_built) come from
+  // /properties/stats on a separate, parallel fetch so a slow aggregate
+  // never blocks the property cards rendering. The StatsBar shows
+  // skeletons for those three KPIs while this is true.
+  const [aggregatesLoading, setAggregatesLoading] = useState(!!initialFilters.state)
   const [error, setError] = useState<string | null>(null)
 
   const [detailProperty, setDetailProperty] = useState<Property | null>(null)
@@ -143,6 +148,9 @@ function IntelligencePageInner() {
   const [portfolioInput, setPortfolioInput] = useState<PortfolioPanelInput | null>(null)
   const debounceRef = useRef<number | null>(null)
   const reqIdRef = useRef(0)
+  // Separate request id for the aggregates fetch so a slow stats response
+  // for an old filter set doesn't overwrite a fresh main response.
+  const aggReqIdRef = useRef(0)
 
   // Push filter+page state into URL.
   const syncUrl = useCallback(
@@ -174,6 +182,8 @@ function IntelligencePageInner() {
         setPages(1)
       } else {
         setProperties(json.properties)
+        // Seed stats with the count + nulls; the parallel /stats fetch
+        // will merge in the aggregate fields when it finishes.
         setStats(json.stats)
         setTotal(json.total)
         setPages(json.pages)
@@ -184,6 +194,41 @@ function IntelligencePageInner() {
       setError(e instanceof Error ? e.message : "Failed to load")
     } finally {
       if (myReqId === reqIdRef.current) setLoading(false)
+    }
+  }, [])
+
+  // Separate, non-blocking fetch for the aggregate KPIs. The cards must
+  // not wait on this — a slow aggregate scan should never block them.
+  const fetchAggregates = useCallback(async (f: Filters) => {
+    const myReqId = ++aggReqIdRef.current
+    setAggregatesLoading(true)
+    try {
+      // Page param is irrelevant for aggregates; pass 1 so the helper's
+      // pagination-stripping doesn't matter.
+      const sp = filtersToApiParams(f, 1)
+      sp.delete("page")
+      sp.delete("per_page")
+      const res = await fetch(`/api/intelligence/properties/stats?${sp.toString()}`)
+      const json = (await res.json()) as {
+        total_sqft: number | null
+        total_value: number | null
+        avg_year_built: number | null
+      }
+      if (myReqId !== aggReqIdRef.current) return
+      setStats((prev) =>
+        prev
+          ? {
+              ...prev,
+              total_sqft: json.total_sqft,
+              total_value: json.total_value,
+              avg_year_built: json.avg_year_built,
+            }
+          : prev
+      )
+    } catch {
+      // Soft-fail: leave the aggregate KPIs as null so the bar shows "—".
+    } finally {
+      if (myReqId === aggReqIdRef.current) setAggregatesLoading(false)
     }
   }, [])
 
@@ -200,6 +245,7 @@ function IntelligencePageInner() {
       // Reset result-y state so leftovers from a prior search don't
       // bleed through into the empty-state view.
       setLoading(false)
+      setAggregatesLoading(false)
       setProperties([])
       setStats(null)
       setTotal(0)
@@ -210,6 +256,11 @@ function IntelligencePageInner() {
       return
     }
     fetchData(filters, page)
+    // Fired in parallel — does not block fetchData. Skip on
+    // pagination-only changes (page > 1) since the aggregates don't
+    // depend on which page is visible. The dependency array below
+    // includes `page`, but the in-flight stale guard handles the rest.
+    fetchAggregates(filters)
     syncUrl(filters, page)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -266,7 +317,12 @@ function IntelligencePageInner() {
 
   return (
     <div className="flex h-screen flex-col">
-      <StatsBar stats={stats} loading={loading && !stats} lastUpdated={lastUpdated} />
+      <StatsBar
+        stats={stats}
+        loading={loading && !stats}
+        aggregatesLoading={aggregatesLoading}
+        lastUpdated={lastUpdated}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <FilterSidebar
